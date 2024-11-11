@@ -3,31 +3,41 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import * as dotenv from 'dotenv';
 dotenv.config();
+import cors from 'cors';
 
 const app = express();
+
+app.use(cors());
+
 const httpServer = createServer(app);
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
-    }
+        origin: CLIENT_URL,
+        methods: ["GET", "POST"],
+        credentials: true,
+        allowedHeaders: ["my-custom-header"],
+    },
+    allowEIO3: true
 });
 
-// Socket.IO connection handling
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log('User connected:', socket.id);
 
-    // Handle events
-    socket.on('message', (data) => {
-        console.log('Message received:', data);
-        // Broadcast to all clients
-        io.emit('message', data);
+    socket.on('songRequest', (song) => {
+        // Broadcast the song request to all clients
+        io.emit('songUpdate', song);
     });
 
     socket.on('disconnect', () => {
-        console.log('User disconnected');
+        console.log('User disconnected:', socket.id);
     });
 });
+
+app.get('/', (req, res) => {
+    res.send('server is running ' + process.env.FRONTEND_URL);
+})
 
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
