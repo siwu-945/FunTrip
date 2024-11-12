@@ -1,0 +1,2 @@
+## Let everyone be the DJ! 
+This web app lets party-goers/friend groups suggest songs in real-time without touching the host's device. Simply join the room, type in your song request, watch the playlist grow as others add their picks. No more fighting over the music - let everyone have a voice in the party playlist!
