@@ -4,10 +4,13 @@ import { Server } from 'socket.io';
 import * as dotenv from 'dotenv';
 dotenv.config();
 import cors from 'cors';
+import spotifyRoutes from './routes/spotify';
+
 
 const app = express();
 
 app.use(cors());
+app.use('api/spotify', spotifyRoutes);
 
 const httpServer = createServer(app);
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';

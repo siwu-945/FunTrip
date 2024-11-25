@@ -1,15 +1,19 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { SongRequest } from './components/SongRequest';
-import { useSocket } from './hooks/useSocket';
+import { SpotifyTest } from './spotify/SpotifyTest';
+import {Home} from "./pages/Home.tsx";
 
 function App() {
-    const { socket, connected } = useSocket();
 
     return (
-        <div>
-            <h1>Connection status: {connected ? 'Welcome!' : 'Disconnected'}</h1>
-            <SongRequest socket={socket} />
-        </div>
-    )
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/callback" element={<SpotifyTest />} />
+
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
 export default App
