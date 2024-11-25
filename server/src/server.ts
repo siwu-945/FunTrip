@@ -10,7 +10,8 @@ import spotifyRoutes from './routes/spotify';
 const app = express();
 
 app.use(cors());
-app.use('api/spotify', spotifyRoutes);
+app.use(express.json());
+app.use('/api/spotify', spotifyRoutes);
 
 const httpServer = createServer(app);
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
