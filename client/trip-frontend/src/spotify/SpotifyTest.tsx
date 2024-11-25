@@ -47,9 +47,9 @@ export const SpotifyTest = () => {
     return (
         <div>
             <button onClick={getAuthCode}>Authenticate with Spotify</button>
-            <button onClick={testSpotifyAPI} disabled={!authCode}>
-                Test Spotify API
-            </button>
+            {/*<button onClick={testSpotifyAPI} disabled={!authCode}>*/}
+            {/*    Test Spotify API*/}
+            {/*</button>*/}
             {response && (
                 <pre>
                     <strong>API Response:</strong>
