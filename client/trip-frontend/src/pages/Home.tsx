@@ -4,6 +4,7 @@ import { useSocket } from '../hooks/useSocket';
 import {SongRequest} from "../components/SongRequest.tsx";
 import {SpotifyTest} from "../spotify/SpotifyTest.tsx";
 import {SpotifyLogin} from "../spotify/SpotifyLogin.tsx";
+import Sidebar from "../components/SideBar.tsx";
 
 
 export const Home = () => {
@@ -15,9 +16,10 @@ export const Home = () => {
 
     return (
         <div className="home-container">
-            <h1>Connection status: {connected ? 'Welcome!' : 'Disconnected'}</h1>
+            {/*<h1>Connection status: {connected ? 'Welcome!' : 'Disconnected'}</h1>*/}
             <SongRequest socket={socket}/>
             <SpotifyTest />
+            <Sidebar />
             {/*<SpotifyLogin code={code}/>*/}
         </div>
     );

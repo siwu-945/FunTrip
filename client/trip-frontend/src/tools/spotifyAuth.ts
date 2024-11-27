@@ -27,6 +27,5 @@ export const getSpotifyAuthURL = () => {
         redirect_uri: import.meta.env.VITE_SPOTIFY_REDIRECT_URI,
         scope: scopes.join(' ')
     });
-
     return `${SPOTIFY_AUTH_URL}?${params.toString()}`;
 };
