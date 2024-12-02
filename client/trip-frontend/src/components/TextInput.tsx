@@ -9,7 +9,7 @@ const TextInput: React.FC = () => {
             {/* Input Field */}
             <input
                 type="text"
-                placeholder="Message ChatGPT"
+                placeholder="Message to the Room"
                 className="flex-1 outline-none text-gray-700"
             />
 
