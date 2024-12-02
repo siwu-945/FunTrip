@@ -8,14 +8,19 @@ import Sidebar from "../components/SideBar.tsx";
 import TextInput from "../components/TextInput.tsx";
 import PlayLists from "../components/PlayLists.tsx";
 import CurrentSongQueue from "../components/CurrentSongQueue.tsx";
+import {useState} from "react";
 
 
 export const Home = () => {
     const navigate = useNavigate();
     const { socket, connected } = useSocket();
-
     const [searchParams] = useSearchParams();
     const code = searchParams.get('code');
+
+    const [currentQueue, setCurrentQueue] = useState<string[]>([]);
+    const handleAddToQueue = (selectedTracks: string[]) => {
+        setCurrentQueue((prev) => [...prev, ...selectedTracks]);
+    };
 
     return (
         <div className="">
@@ -29,7 +34,7 @@ export const Home = () => {
                     <div className="p-6">
                         {/* Room name and Current Song Queue */}
                         <h1 className="text-2xl font-bold mb-2">Room name</h1>
-                        <CurrentSongQueue/>
+                        <CurrentSongQueue songs={currentQueue}/>
                     </div>
 
                     {/* Text Input at the bottom */}
@@ -39,7 +44,7 @@ export const Home = () => {
                         </div>
                     </div>
                 </div>
-                <PlayLists/>
+                <PlayLists handleAddToQueue={handleAddToQueue} />
 
             </div>
             );

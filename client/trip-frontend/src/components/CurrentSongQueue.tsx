@@ -1,9 +1,11 @@
 import React from 'react';
 
+interface SongQueueProps {
+    songs: string[]; // Function that takes an array of strings and returns nothing (void)
+}
 // TODO update the song names with actual added songs
-const CurrentSongQueue: React.FC = () => {
+const CurrentSongQueue: React.FC<SongQueueProps>= ( {songs}) => {
     // Hardcoded list of song names
-    const songQueue = ["Song 1", "Song 2", "Song 3", "Song 4", "Song 5", "Song 1", "Song 2", "Song 3", "Song 4", "Song 5"];
 
     return (
         <div className="bg-gray-100 rounded-md mt-2 w-2/3 max-h-64 flex flex-col">
@@ -13,7 +15,7 @@ const CurrentSongQueue: React.FC = () => {
 
             <div className="flex-1 p-4 overflow-y-auto">
                 <ul className="space-y-1">
-                    {songQueue.map((song, index) => (
+                    {songs.map((song, index) => (
                         <li key={index} className="text-gray-700">
                             {index + 1}. {song}
                         </li>
