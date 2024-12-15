@@ -5,11 +5,12 @@ import SpotifyWebApi from 'spotify-web-api-node'
 import {SpotifyAuthCode} from "../spotify/SpotifyAuthCode.ts";
 
 var spotifyApi = new SpotifyWebApi();
+
 interface PlaylistProps {
-    handleAddToQueue: (tracks: string[]) => void; // Function that takes an array of strings and returns nothing (void)
+    handleAddToQueue: (tracks: SpotifyApi.PlaylistTrackObject[]) => void; // Function that takes an array of strings and returns nothing (void)
 }
 
-const PlayLists: React.FC<PlaylistProps>= ( {handleAddToQueue}) => {
+const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     const [searchParams] = useSearchParams();
     const [userID, setUserID] = useState("")
     const [trackIDs, setTrackIDs] = useState<string[][]>([]);
@@ -17,7 +18,7 @@ const PlayLists: React.FC<PlaylistProps>= ( {handleAddToQueue}) => {
     const [accessToken, setAccessToken] = useState('');
     const [selectedTrack, setSelectedTrack] = useState<string>("");
     const [songItems, setSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
-    const [selectedSongItems, setSelectedSongItems] = useState<string[]>([]);
+    const [selectedSongItems, setSelectedSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
 
     useEffect(() => {
         const code = searchParams.get('code');
@@ -29,7 +30,10 @@ const PlayLists: React.FC<PlaylistProps>= ( {handleAddToQueue}) => {
     }, [searchParams]);
 
     useEffect(() => {
-        if (!accessToken) return
+        if (!accessToken){
+            console.log('No access token found');
+            return;
+        }
         spotifyApi.setAccessToken(accessToken)
     }, [accessToken])
 
@@ -69,7 +73,7 @@ const PlayLists: React.FC<PlaylistProps>= ( {handleAddToQueue}) => {
     const handleSelectionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const playlistID = event.target.value;
         setSelectedTrack(playlistID);
-        if(playlistID){
+        if (playlistID) {
             spotifyApi.getPlaylist(playlistID).then((data => {
                 setSongItems(data.body.tracks.items);
             }))
@@ -96,100 +100,124 @@ const PlayLists: React.FC<PlaylistProps>= ( {handleAddToQueue}) => {
     };
 
 
-    const handleCheckboxChange = (trackName: string) => {
-        // TODO don't add songs not only have the same name, but same singer
-        setSelectedSongItems((prev) =>
-            prev.includes(trackName)
-                ? prev.filter((name) => name !== trackName)
-                : [...prev, trackName]
-        );
+    const handleCheckboxChange = (trackInfo: SpotifyApi.PlaylistTrackObject) => {
+        const trackName = trackInfo.track?.name || ""; // Get track name
+        const trackArtists = trackInfo.track?.artists.map(artist => artist.name).join(", ") || ""; // Get artists
+
+        setSelectedSongItems((prev) => {
+            const isAlreadySelected = prev.some(
+                (item) =>
+                    item.track?.name === trackName &&
+                    item.track?.artists.map(artist => artist.name).join(", ") === trackArtists
+            );
+
+            // Add or remove the track based on its existence
+            if (isAlreadySelected) {
+                return prev.filter(
+                    (item) =>
+                        item.track?.name !== trackName ||
+                        item.track?.artists.map(artist => artist.name).join(", ") !== trackArtists
+                );
+            } else {
+                return [...prev, trackInfo];
+            }
+        });
     };
 
+    function checkIfSongAlreadyAdded(songName : string) : boolean {
+        return selectedSongItems.some(item => item.track?.name === songName);
+    }
+
+
+    // TODO set refresh token
     return (
         <aside className="w-64 h-screen bg-gray-50 p-4 border-r flex flex-col">
-            <div>
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                        <span className="font-semibold text-2xl text-gray-700">Your Songs</span>
-                    </div>
-                    <div className="flex space-x-4">
-                        <i
-                            className="fas fa-sign-in-alt text-gray-600 hover:text-blue-500 hover:scale-110 transition duration-200"
-                            title="Login"
-                            onClick={getSpotifyAuthCode}
-                        ></i>
-                        <i className="fas fa-plus text-gray-600 hover:text-green-500 hover:scale-110 transition duration-200"
-                           title="Add"></i>
-                    </div>
-                </div>
+            {authCode ? (
+                <>
+                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center">
+                                <span className="font-semibold text-2xl text-gray-700">Your Songs</span>
+                            </div>
+                            <div className="flex space-x-4">
+                                <i
+                                    className="fas fa-sign-in-alt text-gray-600 hover:text-blue-500 hover:scale-110 transition duration-200"
+                                    title="Login"
+                                    onClick={getSpotifyAuthCode}
+                                ></i>
+                                <i className="fas fa-plus text-gray-600 hover:text-green-500 hover:scale-110 transition duration-200"
+                                   title="Add"
+                                   onClick={getSpotifyAuthCode}
+                                ></i>
+                            </div>
+                        </div>
 
-                <div className="p-4">
-                    <label htmlFor="playlist-dropdown" className="block text-lg font-medium text-gray-700 mb-2">
-                        Select a Playlist
-                    </label>
-                    <select
-                        id="playlist-dropdown"
-                        value={selectedTrack}
-                        onChange={handleSelectionChange}
-                        className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    >
-                        <option value="" disabled>
-                            -- Select a Playlist --
-                        </option>
-                        {trackIDs.map(([id, name]) => (
-                            <option key={id} value={id}>
-                                {name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-            <nav className="flex-1 overflow-y-auto">
-                <ul>
-                    {songItems.map((obj, idx) => (
-                        <li key={idx} className="flex items-center space-x-2 py-2 px-4">
-                            <input
-                                type="checkbox"
-                                checked={selectedSongItems.includes(obj.track?.name || "")}
-                                onChange={() => handleCheckboxChange(obj.track?.name || "")}
-                                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                            />
-                            <a
-                                // href="#"
-                                className="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-200 rounded"
+                        <div className="p-4">
+                            <label htmlFor="playlist-dropdown" className="block text-lg font-medium text-gray-700 mb-2">
+                                Select a Playlist
+                            </label>
+                            <select
+                                id="playlist-dropdown"
+                                value={selectedTrack}
+                                onChange={handleSelectionChange}
+                                className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                             >
-                                {obj.track?.name}
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            </nav>
+                                <option value="" disabled>
+                                    -- Select a Playlist --
+                                </option>
+                                {trackIDs.map(([id, name]) => (
+                                    <option key={id} value={id}>
+                                        {name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <nav className="flex-1 overflow-y-auto">
+                        <ul>
+                            {songItems.map((obj, idx) => (
+                                <li key={idx} className="flex items-center space-x-2 py-2 px-4">
+                                    <input
+                                        type="checkbox"
+                                        checked={checkIfSongAlreadyAdded(obj.track?.name || "")}
+                                        onChange={() => handleCheckboxChange(obj)}
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                    <a
+                                        className="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-200 rounded"
+                                    >
+                                        {obj.track?.name}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                    <div className="pt-4 border-t flex space-x-2">
 
-            {/* Fixed Buttons */}
-            {/*TODO can only display one button, so user login, login button disappear, the only button they can use is add song
-               TODO if user not logged in, add song button is not there, can ony add song after log in
-             */}
-            <div className="pt-4 border-t flex space-x-2">
-                <button
-                    className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
-                    onClick={getSpotifyAuthCode}
-                >
-                    Login
-                </button>
-                <button
-                    className="flex-1 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
-                    onClick={RetrievePlaylist}
-                >
-                    Retrieve
-                </button>
-                <button
-                    className="flex-1 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
-                    onClick={handleAddSongs}
-                >
-                    Add Song
-                </button>
-            </div>
-
+                        <button
+                            className="flex-1 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
+                            onClick={RetrievePlaylist}
+                        >
+                            Retrieve
+                        </button>
+                        <button
+                            className="flex-1 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
+                            onClick={handleAddSongs}
+                        >
+                            Add Song
+                        </button>
+                    </div>
+                </>
+            ) : (
+                <div className="flex-1 flex items-center justify-center">
+                    <button
+                        className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
+                        onClick={getSpotifyAuthCode}
+                    >
+                        Login
+                    </button>
+                </div>
+            )}
         </aside>
     );
 };

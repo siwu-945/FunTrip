@@ -9,6 +9,7 @@ import TextInput from "../components/TextInput.tsx";
 import PlayLists from "../components/PlayLists.tsx";
 import CurrentSongQueue from "../components/CurrentSongQueue.tsx";
 import {useState} from "react";
+import AudioPlayer from "../components/AudioPlayer.tsx";
 
 
 export const Home = () => {
@@ -17,8 +18,8 @@ export const Home = () => {
     const [searchParams] = useSearchParams();
     const code = searchParams.get('code');
 
-    const [currentQueue, setCurrentQueue] = useState<string[]>([]);
-    const handleAddToQueue = (selectedTracks: string[]) => {
+    const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
+    const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         setCurrentQueue((prev) => [...prev, ...selectedTracks]);
     };
 
@@ -34,6 +35,7 @@ export const Home = () => {
                     <div className="p-6">
                         {/* Room name and Current Song Queue */}
                         <h1 className="text-2xl font-bold mb-2">Room name</h1>
+                        <AudioPlayer songs={currentQueue}/>
                         <CurrentSongQueue songs={currentQueue}/>
                     </div>
 
@@ -48,7 +50,6 @@ export const Home = () => {
 
             </div>
             );
-            {/*<SpotifyLogin code={code}/>*/}
         </div>
     );
 };

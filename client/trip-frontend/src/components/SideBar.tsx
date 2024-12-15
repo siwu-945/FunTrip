@@ -22,7 +22,11 @@ const Sidebar: React.FC = () => {
         <aside className="w-64 h-screen bg-gray-50 p-4 overflow-y-auto border-r">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                    <span className="font-semibold text-2xl text-gray-700">Karaoke King</span>
+                    <span className="font-semibold text-2xl text-gray-700">
+                        <a href="/" className="font-semibold text-2xl text-gray-700 no-underline hover:text-gray-900">
+                            Karaoke King
+                        </a>
+                    </span>
                 </div>
                 <i className="fas fa-edit text-gray-600"></i>
             </div>
