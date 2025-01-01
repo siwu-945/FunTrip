@@ -12,6 +12,7 @@ interface PlaylistProps {
 
 const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     const [searchParams] = useSearchParams();
+    const [showDropdown, setShowDropdown] = useState(false);
     const [userID, setUserID] = useState("")
     const [trackIDs, setTrackIDs] = useState<string[][]>([]);
     const [authCode, setAuthCode] = useState('');
@@ -88,6 +89,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
         const token = await SpotifyAuthCode(authCode);
         if (token) {
             setAccessToken(token);
+            setShowDropdown(true);
             console.log("got access. token" + token);
         } else {
             console.log("Failed to retrieve access token.");
@@ -152,25 +154,38 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
                             </div>
                         </div>
 
-                        <div className="p-4">
-                            <label htmlFor="playlist-dropdown" className="block text-lg font-medium text-gray-700 mb-2">
-                                Select a Playlist
-                            </label>
-                            <select
-                                id="playlist-dropdown"
-                                value={selectedTrack}
-                                onChange={handleSelectionChange}
-                                className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                            >
-                                <option value="" disabled>
-                                    -- Select a Playlist --
-                                </option>
-                                {trackIDs.map(([id, name]) => (
-                                    <option key={id} value={id}>
-                                        {name}
+                        {showDropdown &&
+                            <div className="p-4">
+                                <label htmlFor="playlist-dropdown"
+                                       className="block text-lg font-medium text-gray-700 mb-2">
+                                    Select a Playlist
+                                </label>
+                                <select
+                                    id="playlist-dropdown"
+                                    value={selectedTrack}
+                                    onChange={handleSelectionChange}
+                                    className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                                    <option value="" disabled>
+                                        -- Select a Playlist --
                                     </option>
-                                ))}
-                            </select>
+                                    {trackIDs.map(([id, name]) => (
+                                        <option key={id} value={id}>
+                                            {name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        }
+                        <div className="flex items-center justify-center">
+                            {!showDropdown && (
+                                <button
+                                    className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
+                                    onClick={RetrievePlaylist}
+                                >
+                                    Retrieve Your Playlist
+                                </button>
+                            )}
                         </div>
                     </div>
                     <nav className="flex-1 overflow-y-auto">
@@ -192,21 +207,17 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
                             ))}
                         </ul>
                     </nav>
-                    <div className="pt-4 border-t flex space-x-2">
 
-                        <button
-                            className="flex-1 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
-                            onClick={RetrievePlaylist}
-                        >
-                            Retrieve
-                        </button>
-                        <button
-                            className="flex-1 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
-                            onClick={handleAddSongs}
-                        >
-                            Add Song
-                        </button>
-                    </div>
+                    {showDropdown &&
+                        <div className="pt-4 border-t flex space-x-2">
+                            <button
+                                className="flex-1 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
+                                onClick={handleAddSongs}
+                            >
+                                Add Song
+                            </button>
+                        </div>
+                    }
                 </>
             ) : (
                 <div className="flex-1 flex items-center justify-center">
