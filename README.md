@@ -30,7 +30,11 @@ npm install
 cd ../server
 npm install
 ```
-4. Set up .env files
+4. Set up .env files, make sure you are in the root dir, set up appropriate values accordingly 
+```shell
+cp docs/.env.frontendExample client/trip-frontend/.env
+cp docs/.env.serverExample server/.env
+```
 5. Run the application with 2 terminals
 ```shell
 cd server
