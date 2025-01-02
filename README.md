@@ -30,22 +30,32 @@ npm install
 cd ../server
 npm install
 ```
-4. Set up .env files, make sure you are in the root dir, set up appropriate values accordingly 
+4. Set up SSH key if you haven't done so. It will make your local deployment easier.
+[SSH Doc](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+
+Once set up, you can clone the repository using: git clone git@github.com:siwu-945/FunTrip.git
+
+5. Set up .env files, make sure you are in the root dir, set up appropriate values accordingly 
 ```shell
 cp docs/.env.frontendExample client/trip-frontend/.env
 cp docs/.env.serverExample server/.env
 ```
-5. Run the application with 2 terminals
+
+You need to retrieve the Client ID and Client Secret from your Spotify Web API app.
+Follow the [Spotify Documentation](https://developer.spotify.com/documentation/web-api/concepts/apps) to register your app and obtain the credentials.
+
+
+6. Run the application with 2 terminals
 ```shell
 cd server
 npm run dev
 ```
 ```shell
-cd client
+cd client/trip-frontend
 npm run dev
 ```
 
-6. Then you should be able to access the application on http://localhost:5173/
+7. Then you should be able to access the application. Open up your browser and enter http://localhost:5173/
 
 ## Features🚀
 - Collaborative Playlists: Create or join a room to collectively manage a Spotify playlist with your friends.
@@ -73,5 +83,3 @@ Backend:
 #### General
 1. User login page
 2. Possible database management service to store user song preference
-
-
