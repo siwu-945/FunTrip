@@ -20,6 +20,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     const [selectedTrack, setSelectedTrack] = useState<string>("");
     const [songItems, setSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectedSongItems, setSelectedSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
+    const [selectAll, setSelectAll] = useState(false);
 
     useEffect(() => {
         const code = searchParams.get('code');
@@ -125,7 +126,15 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
             }
         });
     };
-
+    const handleSelectAll = () => {
+        if (selectAll) {
+            setSelectedSongItems([]);
+        } else {
+            setSelectedSongItems([...songItems]);
+        }
+        setSelectAll(!selectAll);
+    };
+    
     function checkIfSongAlreadyAdded(songName : string) : boolean {
         return selectedSongItems.some(item => item.track?.name === songName);
     }
@@ -189,6 +198,19 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
                         </div>
                     </div>
                     <nav className="flex-1 overflow-y-auto">
+                        {songItems.length > 0 && (
+                            <div className="p-4">
+                                <label className="inline-flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectAll}
+                                        onChange={handleSelectAll}
+                                        className="h-4 w-4 text-blue-600"
+                                    />
+                                    <span className="ml-2 text-sm text-gray-700">Select All</span>
+                                </label>
+                            </div>
+                        )}
                         <ul>
                             {songItems.map((obj, idx) => (
                                 <li key={idx} className="flex items-center space-x-2 py-2 px-4">
