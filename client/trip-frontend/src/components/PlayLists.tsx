@@ -67,7 +67,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     useEffect(() => {
         setSelectedSongItems([]);
     }, [selectedTrack]);
-    //Uncomment below and event listenter in the Home.tsx to test the modal
+    //Uncomment below to test the modal
     // useEffect(() => {
     //     // Force the modal to trigger after 3 seconds
     //     const timeout = setTimeout(() => {
