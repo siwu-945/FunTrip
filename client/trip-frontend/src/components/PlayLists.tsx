@@ -67,6 +67,21 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     useEffect(() => {
         setSelectedSongItems([]);
     }, [selectedTrack]);
+    //Uncomment below and event listenter in the Home.tsx to test the modal
+    // useEffect(() => {
+    //     // Force the modal to trigger after 3 seconds
+    //     const timeout = setTimeout(() => {
+    //         console.log("Forcing modal error from PlayLists");
+    //         window.dispatchEvent(new CustomEvent('modalError', {
+    //             detail: { message: "This is a test error to force the modal to appear." }
+    //         }));
+    //     }, 3000);
+    
+    //     return () => clearTimeout(timeout); 
+    // }, []);
+    
+    
+    
 
     const getSpotifyAuthCode = () => {
         window.location.href = getSpotifyAuthURL();

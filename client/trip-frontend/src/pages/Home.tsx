@@ -4,7 +4,6 @@ import { useSocket } from '../hooks/useSocket';
 import {SongRequest} from "../components/SongRequest.tsx";
 import {SpotifyTest} from "../spotify/SpotifyTest.tsx";
 import {SpotifyLogin} from "../spotify/SpotifyLogin.tsx";
-import { SpotifyAuthCode } from '../spotify/SpotifyAuthCode';
 import Sidebar from "../components/SideBar.tsx";
 import TextInput from "../components/TextInput.tsx";
 import PlayLists from "../components/PlayLists.tsx";
@@ -23,36 +22,10 @@ export const Home = () => {
 
     const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [accessToken, setAccessToken] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);    
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         setCurrentQueue((prev) => [...prev, ...selectedTracks]);
     };
-    
-    useEffect(() => {
-
-        {/* Check for authorization error */}
-        const retrieveAccessToken = async () => {
-            // TODO add code validation after completing '../spotify/SpotifyAuthCode'
-            // Comment below 3 lines to test the modal
-            if (!code) {
-                return;
-            }
-            try {
-                const token = await SpotifyAuthCode(code);
-                if (token) {
-                    setAccessToken(token);
-                } else {
-                    triggerError("Failed to retrieve access token. Please try logging in again.");
-                }
-            } catch (error) {
-                triggerError("An error occurred while retrieving the access token.");
-            }
-        };
-
-        retrieveAccessToken();
-    }, [code]);
-
     const triggerError = (message: string) => {
         setError(message);
         setIsModalOpen(true);
@@ -62,9 +35,25 @@ export const Home = () => {
         setIsModalOpen(false);
         setError(null);
     };
+    // event listener for modal event from PlayLists
+    useEffect(() => {
+        const handleModalError = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            console.log("Modal Error Event Captured:", customEvent.detail.message);
+            triggerError(customEvent.detail.message);
+        };
+    
+        window.addEventListener('modalError', handleModalError);
+    
+        return () => {
+            window.removeEventListener('modalError', handleModalError);
+        };
+    }, []);
+    
+
     return (
         <div className="">
-            <div className={`w-screen flex h-screen ${isModalOpen ? 'blur-sm pointer-events-none' : ''}`}>
+            <div className="w-screen flex h-screen">
                 <Sidebar />
                 <div className="flex-1 flex flex-col justify-between">
                     <div className="p-6">
@@ -81,7 +70,7 @@ export const Home = () => {
                 <PlayLists handleAddToQueue={handleAddToQueue} />
             </div>
 
-            {/* Modal for Error Messages */}
+            {/* TODO Update Modal for more Error Messages */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={closeModal}
