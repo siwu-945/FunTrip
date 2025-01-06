@@ -53,17 +53,22 @@ export const Home = () => {
 
     return (
         <div className="">
+            {/*<h1>Connection status: {connected ? 'Welcome!' : 'Disconnected'}</h1>*/}
+            {/*<SongRequest socket={socket}/>*/}
+            {/*<SpotifyTest />*/}
             <div className="w-screen flex h-screen">
-                <Sidebar />
+                <Sidebar/>
                 <div className="flex-1 flex flex-col justify-between">
+                    {/* Main area above the search bar */}
                     <div className="p-6">
+                        {/* Room name and Current Song Queue */}
                         <h1 className="text-2xl font-bold mb-2">Room name</h1>
                         <AudioPlayer songs={currentQueue} />
                         <CurrentSongQueue songs={currentQueue} />
                     </div>
                     <div className="flex justify-center pb-4 px-4">
                         <div className="w-full">
-                            <TextInput />
+                            <TextInput/>
                         </div>
                     </div>
                 </div>
