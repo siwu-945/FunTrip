@@ -66,6 +66,7 @@ export const Home = () => {
                         <AudioPlayer songs={currentQueue}/>
                         <CurrentSongQueue songs={currentQueue}/>
                     </div>
+                    {/* Text Input at the bottom */}
                     <div className="flex justify-center pb-4 px-4">
                         <div className="w-full">
                             <TextInput/>
