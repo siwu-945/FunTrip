@@ -63,8 +63,8 @@ export const Home = () => {
                     <div className="p-6">
                         {/* Room name and Current Song Queue */}
                         <h1 className="text-2xl font-bold mb-2">Room name</h1>
-                        <AudioPlayer songs={currentQueue} />
-                        <CurrentSongQueue songs={currentQueue} />
+                        <AudioPlayer songs={currentQueue}/>
+                        <CurrentSongQueue songs={currentQueue}/>
                     </div>
                     <div className="flex justify-center pb-4 px-4">
                         <div className="w-full">
