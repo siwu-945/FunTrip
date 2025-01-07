@@ -22,52 +22,62 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     const [selectedSongItems, setSelectedSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectAll, setSelectAll] = useState(false);
 
+    // set authorization code
     useEffect(() => {
         const code = searchParams.get('code');
         if (code) {
             setAuthCode(code);
-        } else {
-            console.log('No code found');
+        } else {  
+            window.dispatchEvent(new CustomEvent('modalError', {
+                detail: { message: "Invalid authorization code. Please log in again." }
+            }));
         }
     }, [searchParams]);
-
+    // access token
     useEffect(() => {
-        if (!accessToken){
-            console.log('No access token found');
+        if (!accessToken) {
+            window.dispatchEvent(new CustomEvent('modalError', {
+                detail: { message: "Access token not found. Please re-authenticate." }
+            }));
             return;
         }
-        spotifyApi.setAccessToken(accessToken)
-    }, [accessToken])
+        spotifyApi.setAccessToken(accessToken);
+    }, [accessToken]);
 
     //get the account info from the access token
     useEffect(() => {
-        if (!accessToken) return
+        if (!accessToken) return;
         spotifyApi.getMe().then(data => {
             console.log(data.body)
-            setUserID(data.body.id)
-        }).catch((err) => {
-            console.log(err)
-        })
-    }, [accessToken])
-
+            setUserID(data.body.id);
+        }).catch((error) => {
+            // slient warning
+            const errorMessage = error?.message || "Failed to fetch user account information.";
+            console.warn(errorMessage);
+        });
+    }, [accessToken]);
     //return the playlists user have
     useEffect(() => {
-        if (!userID && !accessToken) return
+        if (!userID && !accessToken) return;
         spotifyApi.getUserPlaylists(userID)
             .then((data) => {
                 const trackData = data.body.items;
-                const newTrackIds = trackData.map((track) => [track.id, track.name])
-                // console.log('Retrieved playlists', newTrackIds);
-                setTrackIDs(newTrackIds)
-            }).catch((err) => {
-            console.log("play list error:" + err)
-        });
-    }, [userID])
+                const newTrackIds = trackData.map((track) => [track.id, track.name]);
+                setTrackIDs(newTrackIds);
+            }).catch((error) => {
+                const errorMessage = error?.message || "Error retrieving playlists. Try again later.";
+                
+                window.dispatchEvent(new CustomEvent('modalError', {
+                    detail: { message: errorMessage }
+                }));
+            });
+    }, [userID]);
+    
 
     useEffect(() => {
         setSelectedSongItems([]);
     }, [selectedTrack]);
-
+    
     const getSpotifyAuthCode = () => {
         window.location.href = getSpotifyAuthURL();
     };
@@ -78,13 +88,18 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
         if (playlistID) {
             spotifyApi.getPlaylist(playlistID).then((data => {
                 setSongItems(data.body.tracks.items);
-            }))
+            })).catch(() => {
+                // slient warning
+                console.warn("Failed to retrieve playlist. Please try again.");
+            });
         }
     };
-
+    
     const RetrievePlaylist = async () => {
         if (!authCode) {
-            console.log("No authorization code. Please login first.");
+            window.dispatchEvent(new CustomEvent('modalError', {
+                detail: { message: "Authorization code missing. Please log in again." }
+            }));
             return;
         }
         const token = await SpotifyAuthCode(authCode);
@@ -93,9 +108,11 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
             setShowDropdown(true);
             console.log("got access. token" + token);
         } else {
-            console.log("Failed to retrieve access token.");
+            window.dispatchEvent(new CustomEvent('modalError', {
+                detail: { message: "Failed to retrieve access token. Try logging in again." }
+            }));
         }
-    }
+    };
 
     const handleAddSongs = () => {
         handleAddToQueue(selectedSongItems);

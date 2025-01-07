@@ -8,8 +8,10 @@ import Sidebar from "../components/SideBar.tsx";
 import TextInput from "../components/TextInput.tsx";
 import PlayLists from "../components/PlayLists.tsx";
 import CurrentSongQueue from "../components/CurrentSongQueue.tsx";
-import {useState} from "react";
+import { useState, useEffect } from "react";
 import AudioPlayer from "../components/AudioPlayer.tsx";
+import Modal from "../components/Modal";
+
 
 
 export const Home = () => {
@@ -19,9 +21,34 @@ export const Home = () => {
     const code = searchParams.get('code');
 
     const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);    
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         setCurrentQueue((prev) => [...prev, ...selectedTracks]);
     };
+    const triggerError = (message: string) => {
+        setError(message);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setError(null);
+    };
+    // event listener for modal event from PlayLists
+    useEffect(() => {
+        const handleModalError = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            triggerError(customEvent.detail.message);
+        };
+    
+        window.addEventListener('modalError', handleModalError);
+    
+        return () => {
+            window.removeEventListener('modalError', handleModalError);
+        };
+    }, []);
+    
 
     return (
         <div className="">
@@ -49,7 +76,13 @@ export const Home = () => {
                 <PlayLists handleAddToQueue={handleAddToQueue} />
 
             </div>
-            );
+
+            {/* TODO Update Modal for more Error Messages */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                message={error || "An unknown error occurred."}
+            />
         </div>
     );
 };
