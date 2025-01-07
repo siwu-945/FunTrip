@@ -39,7 +39,6 @@ export const Home = () => {
     useEffect(() => {
         const handleModalError = (event: Event) => {
             const customEvent = event as CustomEvent;
-            console.log("Modal Error Event Captured:", customEvent.detail.message);
             triggerError(customEvent.detail.message);
         };
     
