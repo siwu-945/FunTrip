@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import express from 'express';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 const SpotifyWebAPI = require("spotify-web-api-node");
 
 const router = express.Router();
@@ -46,7 +47,14 @@ const refresh = async (req: Request, res: Response) => {
     }
 };
 
+// proxy the iframe content so we can have a better control over the embed in our own application
+const embed = createProxyMiddleware<Request, Response>({
+    target: 'https://open.spotify.com',
+    changeOrigin: true,
+});
+
 router.post('/login', login);
 router.post('/refresh', refresh);
+router.use('/embeded', embed);
 
 export default router;
