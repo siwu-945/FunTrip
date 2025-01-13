@@ -16,7 +16,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     const [userID, setUserID] = useState("")
     const [trackIDs, setTrackIDs] = useState<string[][]>([]);
     const [authCode, setAuthCode] = useState('');
-    const [accessToken, setAccessToken] = useState('');
+    const { accessToken, error } = SpotifyAuthCode(authCode);
     const [selectedTrack, setSelectedTrack] = useState<string>("");
     const [songItems, setSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectedSongItems, setSelectedSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
@@ -51,7 +51,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
             console.log(data.body)
             setUserID(data.body.id);
         }).catch((error) => {
-            // slient warning
+            // silent warning
             const errorMessage = error?.message || "Failed to fetch user account information.";
             console.warn(errorMessage);
         });
@@ -102,16 +102,12 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
             }));
             return;
         }
-        const token = await SpotifyAuthCode(authCode);
-        if (token) {
-            setAccessToken(token);
-            setShowDropdown(true);
-            console.log("got access. token" + token);
-        } else {
+        if (!accessToken) {
             window.dispatchEvent(new CustomEvent('modalError', {
                 detail: { message: "Failed to retrieve access token. Try logging in again." }
             }));
         }
+        setShowDropdown(true);
     };
 
     const handleAddSongs = () => {
