@@ -12,7 +12,7 @@ export const SpotifyAuthCode = (code: string) => {
     const [accessToken, setAccessToken] = useState<string>("");
     const [refreshToken, setRefreshToken] = useState<string>("");
     const [expiresIn, setExpiresIn] = useState<number>(0);
-    const [error, setError] = useState<string | null>(null);
+    const [errorMsg, setError] = useState<string | null>(null);
 
     const loginUrl = `${serverURL}/api/spotify/login`;
     const refreshUrl = `${serverURL}/api/spotify/refresh`;
@@ -56,5 +56,5 @@ export const SpotifyAuthCode = (code: string) => {
         return () => clearInterval(interval);
     }, [refreshToken, expiresIn]);
 
-    return { accessToken, refreshToken, expiresIn, error };
+    return { accessToken, refreshToken, expiresIn, errorMsg };
 };
