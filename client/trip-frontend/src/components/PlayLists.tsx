@@ -1,18 +1,15 @@
-import React, {useEffect, useState} from "react";
-import {getSpotifyAuthURL} from "../tools/spotifyAuth.ts";
-import {useNavigate, useSearchParams} from 'react-router-dom';
-import SpotifyWebApi from 'spotify-web-api-node'
-import {SpotifyAuthCode} from "../spotify/SpotifyAuthCode.ts";
+import React, { useEffect, useState } from "react";
+import { getSpotifyAuthURL } from "../tools/spotifyAuth.ts";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import SpotifyWebApi from "spotify-web-api-node";
+import { SpotifyAuthCode } from "../spotify/SpotifyAuthCode.ts";
 
 interface PlaylistProps {
     handleAddToQueue: (tracks: SpotifyApi.PlaylistTrackObject[]) => void; // Function that takes an array of strings and returns nothing (void)
-    accessToken: string;
     spotifyApi: SpotifyWebApi;
-    authCode : string;
 }
 
-const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spotifyApi, authCode}) => {
-    const [searchParams] = useSearchParams();
+const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, spotifyApi}) => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [userID, setUserID] = useState("")
     const [trackIDs, setTrackIDs] = useState<string[][]>([]);
@@ -20,6 +17,10 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
     const [songItems, setSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectedSongItems, setSelectedSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectAll, setSelectAll] = useState(false);
+    const [searchParams] = useSearchParams();
+    const [authCode, setAuthCode] = useState('');
+    const [accessToken, setAccessToken] = useState("");
+
 
     //get the account info from the access token
     useEffect(() => {
@@ -37,6 +38,38 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
             console.warn(errorMessage);
         });
     }, [accessToken]);
+
+    // set authorization code
+    useEffect(() => {
+        const code = searchParams.get("code");
+        if (code) {
+            setAuthCode(code);
+        }
+    }, [searchParams]);
+
+    // exchange auth code for access token
+    useEffect(() => {
+        const fetchAccessToken = async () => {
+            try {
+                if (authCode) {
+                    const token = await SpotifyAuthCode(authCode);
+                    setAccessToken(accessToken);
+                }
+            } catch (error) {
+                const errorMessage = (error as Error).message || "Error fetching access token.";
+                console.log(error);
+                window.dispatchEvent(
+                    new CustomEvent("modalError", {
+                        detail: { message: errorMessage },
+                    })
+                );
+            }
+        };
+        if (authCode) {
+            fetchAccessToken();
+        }
+    }, [authCode]);
+
     //return the playlists user have
     useEffect(() => {
         if (!userID && !accessToken) return;
@@ -45,20 +78,21 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
                 const trackData = data.body.items;
                 const newTrackIds = trackData.map((track) => [track.id, track.name]);
                 setTrackIDs(newTrackIds);
-            }).catch((error) => {
-                const errorMessage = error?.message || "Error retrieving playlists. Try again later.";
-                
-                window.dispatchEvent(new CustomEvent('modalError', {
-                    detail: { message: errorMessage }
-                }));
-            });
-    }, [userID]);
-    
+                setShowDropdown(true); // Show the playlist dropdown after login
+            }).
+        catch((error) => {
+            const errorMessage = error?.message || "Error retrieving playlists. Try again later.";
+            window.dispatchEvent(new CustomEvent('modalError', {
+                detail: { message: errorMessage }
+            }));
+        });
+    }, [userID, accessToken]);
+
 
     useEffect(() => {
         setSelectedSongItems([]);
     }, [selectedTrack]);
-    
+
     const getSpotifyAuthCode = () => {
         console.log("getting auth code");
         window.location.href = getSpotifyAuthURL();
@@ -76,7 +110,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
             });
         }
     };
-    
+
     const RetrievePlaylist = async () => {
         if (!authCode) {
             window.dispatchEvent(new CustomEvent('modalError', {
@@ -129,10 +163,11 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
         }
         setSelectAll(!selectAll);
     };
-    
+
     function checkIfSongAlreadyAdded(songName : string) : boolean {
         return selectedSongItems.some(item => item.track?.name === songName);
     }
+
 
     return (
         <aside className="w-64 h-screen bg-gray-50 p-4 border-r flex flex-col">
@@ -147,19 +182,20 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
                                 <i
                                     className="fas fa-sign-in-alt text-gray-600 hover:text-blue-500 hover:scale-110 transition duration-200"
                                     title="Login"
-                                    onClick={getSpotifyAuthCode}
+                                    onClick={() => window.location.href = getSpotifyAuthURL()}
                                 ></i>
-                                <i className="fas fa-plus text-gray-600 hover:text-green-500 hover:scale-110 transition duration-200"
-                                   title="Add"
-                                   onClick={getSpotifyAuthCode}
-                                ></i>
+                                <i
+                                    className="fas fa-plus text-gray-600 hover:text-green-500 hover:scale-110 transition duration-200"
+                                    title="Add"></i>
                             </div>
                         </div>
 
-                        {showDropdown &&
+                        {showDropdown && (
                             <div className="p-4">
-                                <label htmlFor="playlist-dropdown"
-                                       className="block text-lg font-medium text-gray-700 mb-2">
+                                <label
+                                    htmlFor="playlist-dropdown"
+                                    className="block text-lg font-medium text-gray-700 mb-2"
+                                >
                                     Select a Playlist
                                 </label>
                                 <select
@@ -178,17 +214,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
                                     ))}
                                 </select>
                             </div>
-                        }
-                        <div className="flex items-center justify-center">
-                            {!showDropdown && (
-                                <button
-                                    className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
-                                    onClick={RetrievePlaylist}
-                                >
-                                    Retrieve Your Playlist
-                                </button>
-                            )}
-                        </div>
+                        )}
                     </div>
                     <nav className="flex-1 overflow-y-auto">
                         {songItems.length > 0 && (
@@ -213,9 +239,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
                                         onChange={() => handleCheckboxChange(obj)}
                                         className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                                     />
-                                    <a
-                                        className="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-200 rounded"
-                                    >
+                                    <a className="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-200 rounded">
                                         {obj.track?.name}
                                     </a>
                                 </li>
@@ -223,22 +247,22 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
                         </ul>
                     </nav>
 
-                    {showDropdown &&
-                        <div className="pt-4 border-t flex space-x-2">
+                    {showDropdown && (
+                        <div className="p-4">
                             <button
-                                className="flex-1 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition duration-200"
                                 onClick={handleAddSongs}
+                                className="w-full p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                             >
-                                Add Song
+                                Add Songs
                             </button>
                         </div>
-                    }
+                    )}
                 </>
             ) : (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="p-4 text-center">
                     <button
                         className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
-                        onClick={getSpotifyAuthCode}
+                        onClick={() => window.location.href = getSpotifyAuthURL()}
                     >
                         Login
                     </button>
@@ -247,5 +271,6 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue, accessToken, spot
         </aside>
     );
 };
+
 
 export default PlayLists;

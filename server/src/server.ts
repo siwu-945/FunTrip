@@ -27,7 +27,6 @@ const io = new Server(httpServer, {
 });
 
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
 
     socket.on('songRequest', (song) => {
         // Broadcast the song request to all clients

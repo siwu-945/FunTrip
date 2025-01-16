@@ -12,6 +12,7 @@ const createSpotifyAPI = (refreshToken?: string) => {
         refreshToken
     });
 };
+
 const login = async (req: Request, res: Response) => {
     try {
         console.log("trying to log in to spotify");

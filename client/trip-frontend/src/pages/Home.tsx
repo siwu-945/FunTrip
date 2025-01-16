@@ -23,11 +23,10 @@ export const Home = () => {
     const [error, setError] = useState<string | null>(null);
     const [authCode, setAuthCode] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [accessToken, setAccessToken] = useState("");
 
     const navigate = useNavigate();
     const { socket, connected } = useSocket();
-    const [searchParams] = useSearchParams();
-    const { accessToken, errorMsg } = SpotifyAuthCode(authCode);
 
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         setCurrentQueue((prev) => [...prev, ...selectedTracks]);
@@ -54,15 +53,6 @@ export const Home = () => {
         };
     }, []);
 
-    // set authorization code
-    useEffect(() => {
-        const code = searchParams.get('code');
-
-        if (code) {
-            setAuthCode(code);
-        }
-
-    }, [searchParams]);
     // access token
     useEffect(() => {
         if (!accessToken) return;
@@ -94,7 +84,7 @@ export const Home = () => {
                         </div>
                     </div>
                 </div>
-                <PlayLists handleAddToQueue={handleAddToQueue} accessToken={accessToken} spotifyApi={spotifyApi} authCode={authCode} />
+                <PlayLists handleAddToQueue={handleAddToQueue} spotifyApi={spotifyApi} />
 
             </div>
 
