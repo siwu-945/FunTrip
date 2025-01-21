@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState} from "react";
 import {getSpotifyAuthURL} from "../tools/spotifyAuth.ts";
 import {useSearchParams} from "react-router-dom";
 import SpotifyWebApi from "spotify-web-api-node";
