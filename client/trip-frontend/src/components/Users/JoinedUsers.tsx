@@ -1,4 +1,5 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
+import { Socket } from 'socket.io-client';
 
 interface User {
     id: string;
@@ -8,16 +9,33 @@ interface User {
 interface JoinedUsersProps {
     users: User[];
     roomName : string;
+    socket : Socket;
 }
 
-const JoinedUsers: React.FC<JoinedUsersProps> = ({users, roomName}) => {
+const JoinedUsers: React.FC<JoinedUsersProps> = ({users, roomName, socket}) => {
+
+    const [joinedUser, setJoinedUsers] = useState<User[]>([]);
+    const [triggered, setTriggered] = useState<boolean>(false);
+    useEffect(() => {
+        socket.emit("getRoomUsers", roomName, (users: User[]) => {
+            console.log("Users in the room:", users);
+            setJoinedUsers(users);
+        });
+
+    }, [triggered]);
+
+    useEffect(() => {
+        console.log("take a look at joined users: " + joinedUser);
+
+    }, [joinedUser]);
+
 
     return (
         <aside className="w-64 h-screen bg-gray-50 p-4 overflow-y-auto border-r">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                     <span className="font-semibold text-2xl text-gray-700">
-                        <a href="/client/trip-frontend/public" className="font-semibold text-2xl text-gray-700 no-underline hover:text-gray-900">
+                        <a href="#" className="font-semibold text-2xl text-gray-700 no-underline hover:text-gray-900">
                             Karaoke King
                         </a>
                     </span>

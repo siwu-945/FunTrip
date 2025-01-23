@@ -6,7 +6,10 @@ dotenv.config();
 import cors from 'cors';
 import spotifyRoutes from './routes/spotify';
 
-
+type User = {
+    id: string;
+    username: string;
+};
 const app = express();
 
 app.use(cors());
@@ -40,6 +43,14 @@ io.on('connection', (socket) => {
         socket.on("disconnect", () => {
             rooms[roomId] = rooms[roomId].filter((user) => user.id !== socket.id);
             io.to(roomId).emit("userLeft", rooms[roomId]);
+        })
+
+        socket.on("getRoomUsers", (roomId: string, callback: (users: User[]) => void) => {
+            if (rooms[roomId]) {
+                callback(rooms[roomId]);
+            } else {
+                callback([]);
+            }
         })
     });
 });

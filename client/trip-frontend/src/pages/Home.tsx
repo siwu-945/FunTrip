@@ -10,6 +10,9 @@ import AudioPlayer from "../components/AudioPlayer.tsx";
 import Modal from "../components/Popups/Modal.tsx";
 import WelcomePage from "./WelcomePage.tsx";
 import Footer from "../components/Footer.tsx";
+import {getCookie, setCookie} from "../tools/Cookies.ts";
+import UserInfo from "../components/Users/UserInfo.tsx";
+import userInfo from "../components/Users/UserInfo.tsx";
 
 interface User {
     id: string;
@@ -35,18 +38,31 @@ export const Home = () => {
         setCurrentQueue((prev) => [...prev, ...selectedTracks]);
     };
     const handleJoinRoom = () => {
+
+        setCookie("username", userName, {expires: 7, path: "/"});
+        setCookie("roomId", roomId, {expires: 7, path: "/"});
+
         if (!userName.trim() || !roomId.trim()) {
             alert("Please enter a valid username and room ID!");
             return;
         }
-
-        // Send room join info to the server
         if (socket) {
             socket.emit("joinRoom", {roomId, username: userName});
         }
-        // Toggle UI to show the joined state
         setUserJoined(true);
     };
+
+    // TODO use cookie to get and set user info, so when they come back, they are in the same session/room
+    // useEffect(() => {
+    //     const savedUsername = getCookie("username");
+    //     const savedRoomId = getCookie("roomId");
+    //
+    //     if (savedUsername && savedRoomId) {
+    //         setUserName(savedUsername);
+    //         setRoomId(savedRoomId);
+    //         setUserJoined(true);
+    //     }
+    // }, []);
 
     const triggerError = (message: string) => {
         setError(message);
@@ -57,6 +73,7 @@ export const Home = () => {
         setIsModalOpen(false);
         setError(null);
     };
+
     // event listener for modal event from PlayLists
     useEffect(() => {
         const handleModalError = (event: Event) => {
@@ -92,36 +109,45 @@ export const Home = () => {
 
     return (
         <div className="w-screen h-screen">
-            {!userJoined ? (
-                    <WelcomePage
+            {/*{!userJoined ? (*/}
+            {/*<UserInfo*/}
+            {/*    username={userName}*/}
+            {/*    setUsername={setUserName}*/}
+            {/*    roomId={roomId}*/}
+            {/*    setRoomId={setRoomId}*/}
+            {/*    handleJoinRoom={handleJoinRoom}*/}
+            {/*/>*/}
+            {/*    ) :*/}
+            <div className="w-screen flex h-screen">
+                {!userJoined ?
+                    <UserInfo
                         username={userName}
                         setUsername={setUserName}
                         roomId={roomId}
                         setRoomId={setRoomId}
                         handleJoinRoom={handleJoinRoom}
-                    />
-                ) :
-                <div className="w-screen flex h-screen">
-                    <JoinedUsers users={joinedUser} roomName={roomId}/>
-                    <div className="flex-1 flex flex-col justify-between">
-                        {/* Main area above the search bar */}
-                        <div className="p-6">
-                            {/* Room name and Current Song Queue */}
-                            <h1 className="text-2xl font-bold mb-2">Room name</h1>
-                            <AudioPlayer songs={currentQueue}/>
-                            <CurrentSongQueue songs={currentQueue}/>
-                        </div>
+                    /> :
 
-                        {/* Text Input at the bottom */}
-                        <div className="flex justify-center pb-4 px-4">
-                            <div className="w-full">
-                                <TextInput/>
-                            </div>
+                    <JoinedUsers socket={socket} users={joinedUser} roomName={roomId}/>
+                }
+                <div className="flex-1 flex flex-col justify-between">
+                    {/* Main area above the search bar */}
+                    <div className="p-6">
+                        {/* Room name and Current Song Queue */}
+                        <h1 className="text-2xl font-bold mb-2">Room name</h1>
+                        <AudioPlayer songs={currentQueue}/>
+                        <CurrentSongQueue songs={currentQueue}/>
+                    </div>
+
+                    {/* Text Input at the bottom */}
+                    <div className="flex justify-center pb-4 px-4">
+                        <div className="w-full">
+                            <TextInput/>
                         </div>
                     </div>
-                    <PlayLists handleAddToQueue={handleAddToQueue}/>
                 </div>
-            }
+                <PlayLists handleAddToQueue={handleAddToQueue}/>
+            </div>
 
             {/* TODO Update Modal for more Error Messages */}
             <Modal isOpen={isModalOpen} onClose={closeModal} message={error || "An unknown error occurred."}/>
