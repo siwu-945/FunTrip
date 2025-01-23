@@ -27,12 +27,6 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
         const code = searchParams.get("code");
         if (code) {
             setAuthCode(code);
-        } else {
-            window.dispatchEvent(
-                new CustomEvent("modalError", {
-                    detail: {message: "Invalid authorization code. Please log in again."},
-                })
-            );
         }
     }, [searchParams]);
 
