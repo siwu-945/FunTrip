@@ -6,7 +6,10 @@ dotenv.config();
 import cors from 'cors';
 import spotifyRoutes from './routes/spotify';
 
-
+type User = {
+    id: string;
+    username: string;
+};
 const app = express();
 
 app.use(cors());
@@ -15,6 +18,7 @@ app.use('/api/spotify', spotifyRoutes);
 
 const httpServer = createServer(app);
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+const rooms: Record<string, { id: string; username: string }[]> = {};
 
 const io = new Server(httpServer, {
     cors: {
@@ -27,15 +31,27 @@ const io = new Server(httpServer, {
 });
 
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
 
-    socket.on('songRequest', (song) => {
-        // Broadcast the song request to all clients
-        io.emit('songUpdate', song);
-    });
+    socket.on('joinRoom', ({roomId, username} : {roomId : string; username : string}) => {
+        socket.join(roomId);
+        if(!rooms[roomId]) rooms[roomId] = [];
+        rooms[roomId].push({id: socket.id, username: username});
+        console.log("user id: " + socket.id + " user name: " + username + " room id: " + roomId);
+        io.to(roomId).emit('joinRoom', roomId);
+        io.to(roomId).emit('userJoined', rooms[roomId]);
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
+        socket.on("disconnect", () => {
+            rooms[roomId] = rooms[roomId].filter((user) => user.id !== socket.id);
+            io.to(roomId).emit("userLeft", rooms[roomId]);
+        })
+
+        socket.on("getRoomUsers", (roomId: string, callback: (users: User[]) => void) => {
+            if (rooms[roomId]) {
+                callback(rooms[roomId]);
+            } else {
+                callback([]);
+            }
+        })
     });
 });
 
