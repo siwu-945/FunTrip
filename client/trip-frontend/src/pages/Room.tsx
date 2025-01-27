@@ -9,21 +9,20 @@ import { useState } from "react"
 
 interface RoomProps {
     socket: Socket;
-    joinedUser: User[];
     roomId: string;
     setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const Room : React.FC<RoomProps> = ({ socket, joinedUser, roomId, setUserJoined }) => {
+export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined }) => {
 
     const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         setCurrentQueue((prev) => [...prev, ...selectedTracks]);
     };
-    
+
     return (
         <div className="w-screen flex h-screen">
-            <JoinedUsers socket={socket} users={joinedUser} roomName={roomId} setUserJoined={setUserJoined} />
+            <JoinedUsers socket={socket} roomName={roomId} setUserJoined={setUserJoined} />
             <div className="flex-1 flex flex-col justify-between">
                 {/* Main area above the search bar */}
                 <div className="p-6">

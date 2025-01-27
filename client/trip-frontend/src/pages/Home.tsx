@@ -11,13 +11,12 @@ import { User } from '../types/index.ts';
 
 export const Home = () => {
     const navigate = useNavigate();
-    const {socket, connected} = useSocket();
+    const {socket} = useSocket();
     const [searchParams] = useSearchParams();
     const code = searchParams.get('code');
 
     const [userName, setUserName] = useState('');
     const [roomId, setRoomId] = useState('');
-    const [joinedUser, setJoinedUsers] = useState<User[]>([]);
     const [userJoined, setUserJoined] = useState(false);
 
     const [error, setError] = useState<string | null>(null);
@@ -74,24 +73,24 @@ export const Home = () => {
         };
     }, []);
 
-    useEffect(() => {
-        if (userJoined && socket) {
-            socket.on("userJoined", (updatedUsers: User[]) => {
-                setJoinedUsers(updatedUsers);
-            });
-            socket.on("userLeft", (updatedUsers: User[]) => {
-                setJoinedUsers(updatedUsers);
-            });
-        }
+    // useEffect(() => {
+    //     if (userJoined && socket) {
+    //         socket.on("userJoined", (updatedUsers: User[]) => {
+    //             setJoinedUsers(updatedUsers);
+    //         });
+    //         socket.on("userLeft", (updatedUsers: User[]) => {
+    //             setJoinedUsers(updatedUsers);
+    //         });
+    //     }
 
-        // Cleanup listeners on unmount or if userJoined/socket changes
-        return () => {
-            if (socket) {
-                socket.off("userJoined");
-                socket.off("userLeft");
-            }
-        };
-    }, [userJoined, socket]);
+    //     // Cleanup listeners on unmount or if userJoined/socket changes
+    //     return () => {
+    //         if (socket) {
+    //             socket.off("userJoined");
+    //             socket.off("userLeft");
+    //         }
+    //     };
+    // }, [userJoined, socket]);
 
     return (
         <div className="w-screen h-screen">
@@ -105,7 +104,7 @@ export const Home = () => {
                     />) :
                     <Room 
                         socket={socket} 
-                        joinedUser={joinedUser} 
+                        // joinedUser={joinedUser} 
                         roomId={roomId} 
                         setUserJoined={setUserJoined}
                     />

@@ -4,35 +4,85 @@ import { User } from '../../types/index';
 
 
 interface JoinedUsersProps {
-    users: User[];
     roomName: string;
     socket: Socket;
     setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const JoinedUsers: React.FC<JoinedUsersProps> = ({ users, roomName, socket, setUserJoined}) => {
+const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined }) => {
 
-    const [joinedUser, setJoinedUsers] = useState<User[]>([]);
-    const [triggered, setTriggered] = useState<boolean>(false);
+    const [joinedUser, setJoinedUsers] = useState<string[]>([]);
     useEffect(() => {
-        socket.emit("getRoomUsers", roomName, (users: User[]) => {
+        socket.emit("getUserNames", roomName, (users: string[]) => {
             console.log("Users in the room:", users);
             setJoinedUsers(users);
         });
 
-    }, [triggered]);
+    }, []);
 
+    // TODO why isn't server picking up the getUserNames event?
     useEffect(() => {
-        console.log("take a look at joined users: " + joinedUser);
+        console.log("refreshing users");
+    
+        const handleConnect = () => {
+            console.log("Socket reconnected, emitting getUserNames: " + socket.connected);
+            console.log("roomName: " + roomName);
+            socket.emit("getUserNames", roomName, (users: string[]) => {
+                console.log("Users in the room:", users);
+                setJoinedUsers(users);
+            });
+        };
+    
+        // Listen for the 'connect' event
+        socket.on('connect', handleConnect);
+    
+        // If the socket is already connected, emit the event immediately
+        if (socket.connected) {
+            handleConnect();
+        }
+        
+        socket.onAnyOutgoing((event, args) => {
+            console.log(event)
+            // console.log(args)
+        })
 
-    }, [joinedUser]);
+        // Cleanup the event listener
+        return () => {
+            socket.off('connect', handleConnect);
+        };
+    }, []);
+
+    // listen and update for userJoined and userLeft events
+    useEffect(() => {
+        if (socket) {
+            socket.on("userJoined", (updatedUsers: User[]) => {
+                const names: string[] = updatedUsers.map((user) => user.username);
+                setJoinedUsers(names);
+            });
+            socket.on("userLeft", (updatedUsers: User[]) => {
+                const names: string[] = updatedUsers.map((user) => user.username);
+                setJoinedUsers(names);
+            });
+        }
+
+        // Cleanup listeners on unmount or if userJoined/socket changes
+        return () => {
+            if (socket) {
+                socket.off("userJoined");
+                socket.off("userLeft");
+            }
+        };
+    }, [socket]);
 
     const handleUserLeave = () => {
-        // cleaning up auth code
+        // cleaning up auth code in the URL
         window.history.pushState({}, "", "/");
 
         setUserJoined(false);
-        socket.emit("existRoom", roomName);
+        socket.emit("exitRoom", roomName);
+        socket.emit("getUserNames", roomName, (users: string[]) => {
+            setJoinedUsers(users);
+        });
     };
 
 
@@ -47,7 +97,7 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ users, roomName, socket, setU
                     </span>
                 </div>
                 <div>
-                    <i 
+                    <i
                         className="fas fa-sign-out-alt text-gray-600"
                         title="Leave Room"
                         onClick={handleUserLeave}
@@ -58,9 +108,9 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ users, roomName, socket, setU
             <h3>Welcome to room {roomName}</h3>
             <nav>
                 <ul>
-                    {users.map((user, idx) => (
+                    {joinedUser.map((username, idx) => (
                         <li key={idx} className="py-2 px-4 text-sm text-gray-700 hover:bg-gray-200 rounded">
-                            {user.username}
+                            {username}
                         </li>
                     ))}
                 </ul>

@@ -6,10 +6,6 @@ dotenv.config();
 import cors from 'cors';
 import spotifyRoutes from './routes/spotify';
 
-type User = {
-    id: string;
-    username: string;
-};
 const app = express();
 
 app.use(cors());
@@ -37,7 +33,7 @@ io.on('connection', (socket) => {
         if(!rooms[roomId]) rooms[roomId] = [];
 
         rooms[roomId].push({id: socket.id, username: username});
-        console.log("user id: " + socket.id + " user name: " + username + " room id: " + roomId);
+        // console.log("user id: " + socket.id + " user name: " + username + " room id: " + roomId);
         io.to(roomId).emit('joinRoom', roomId);
         io.to(roomId).emit('userJoined', rooms[roomId]);
 
@@ -46,19 +42,27 @@ io.on('connection', (socket) => {
             io.to(roomId).emit("userLeft", rooms[roomId]);
         })
 
-        socket.on("getRoomUsers", (roomId: string, callback: (users: User[]) => void) => {
+        socket.on("getUserNames", (roomId: string, callback: (users: string[]) => void) => {
+            console.log("getting users in the room: " + roomId);
             if (rooms[roomId]) {
-                callback(rooms[roomId]);
+                console.log("Users in the room:", rooms[roomId]);
+                const userNames = rooms[roomId].map((user) => user.username);
+                callback(userNames);
             } else {
+                console.log("No users in the room");
                 callback([]);
             }
         })
 
         socket.on("exitRoom", (roomId: string) => {
+            console.log("leaving the room" + roomId);
             if(rooms[roomId]){
+                console.log("User left the room: " + socket.id);
                 rooms[roomId] = rooms[roomId].filter((user) => user.id !== socket.id);
                 io.to(roomId).emit("userLeft", rooms[roomId]);
                 socket.leave(roomId);
+            }else{
+                console.log("Room does not exist");
             }
         })
     });
