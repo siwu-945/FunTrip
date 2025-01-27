@@ -1,18 +1,16 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { Socket } from 'socket.io-client';
+import { User } from '../../types/index';
 
-interface User {
-    id: string;
-    username: string;
-}
 
 interface JoinedUsersProps {
     users: User[];
-    roomName : string;
-    socket : Socket;
+    roomName: string;
+    socket: Socket;
+    setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const JoinedUsers: React.FC<JoinedUsersProps> = ({users, roomName, socket}) => {
+const JoinedUsers: React.FC<JoinedUsersProps> = ({ users, roomName, socket, setUserJoined}) => {
 
     const [joinedUser, setJoinedUsers] = useState<User[]>([]);
     const [triggered, setTriggered] = useState<boolean>(false);
@@ -29,6 +27,14 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({users, roomName, socket}) => {
 
     }, [joinedUser]);
 
+    const handleUserLeave = () => {
+        // cleaning up auth code
+        window.history.pushState({}, "", "/");
+
+        setUserJoined(false);
+        socket.emit("existRoom", roomName);
+    };
+
 
     return (
         <aside className="w-64 h-screen bg-gray-50 p-4 overflow-y-auto border-r">
@@ -40,7 +46,14 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({users, roomName, socket}) => {
                         </a>
                     </span>
                 </div>
-                <i className="fas fa-edit text-gray-600"></i>
+                <div>
+                    <i 
+                        className="fas fa-sign-out-alt text-gray-600"
+                        title="Leave Room"
+                        onClick={handleUserLeave}
+                    ></i>
+
+                </div>
             </div>
             <h3>Welcome to room {roomName}</h3>
             <nav>

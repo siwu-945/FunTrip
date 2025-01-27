@@ -1,23 +1,13 @@
 import {useNavigate} from 'react-router-dom';
 import {useSearchParams} from 'react-router-dom';
 import {useSocket} from '../hooks/useSocket';
-import JoinedUsers from "../components/Users/JoinedUsers.tsx";
-import TextInput from "../components/TextInput.tsx";
-import PlayLists from "../components/PlayLists.tsx";
-import CurrentSongQueue from "../components/CurrentSongQueue.tsx";
 import {useState, useEffect} from "react";
-import AudioPlayer from "../components/AudioPlayer.tsx";
 import Modal from "../components/Popups/Modal.tsx";
 import WelcomePage from "./WelcomePage.tsx";
 import Footer from "../components/Footer.tsx";
 import {getCookie, setCookie} from "../tools/Cookies.ts";
-import UserInfo from "../components/Users/UserInfo.tsx";
-import userInfo from "../components/Users/UserInfo.tsx";
-
-interface User {
-    id: string;
-    username: string;
-}
+import { Room } from './Room.tsx';
+import { User } from '../types/index.ts';
 
 export const Home = () => {
     const navigate = useNavigate();
@@ -30,13 +20,9 @@ export const Home = () => {
     const [joinedUser, setJoinedUsers] = useState<User[]>([]);
     const [userJoined, setUserJoined] = useState(false);
 
-    const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
-        setCurrentQueue((prev) => [...prev, ...selectedTracks]);
-    };
     const handleJoinRoom = () => {
 
         setCookie("username", userName, {expires: 7, path: "/"});
@@ -53,16 +39,16 @@ export const Home = () => {
     };
 
     // TODO use cookie to get and set user info, so when they come back, they are in the same session/room
-    // useEffect(() => {
-    //     const savedUsername = getCookie("username");
-    //     const savedRoomId = getCookie("roomId");
-    //
-    //     if (savedUsername && savedRoomId) {
-    //         setUserName(savedUsername);
-    //         setRoomId(savedRoomId);
-    //         setUserJoined(true);
-    //     }
-    // }, []);
+    useEffect(() => {
+        const savedUsername = getCookie("username");
+        const savedRoomId = getCookie("roomId");
+
+        if (savedUsername && savedRoomId) {
+            setUserName(savedUsername);
+            setRoomId(savedRoomId);
+            setUserJoined(true);
+        }
+    }, []);
 
     const triggerError = (message: string) => {
         setError(message);
@@ -109,49 +95,26 @@ export const Home = () => {
 
     return (
         <div className="w-screen h-screen">
-            {/*{!userJoined ? (*/}
-            {/*<UserInfo*/}
-            {/*    username={userName}*/}
-            {/*    setUsername={setUserName}*/}
-            {/*    roomId={roomId}*/}
-            {/*    setRoomId={setRoomId}*/}
-            {/*    handleJoinRoom={handleJoinRoom}*/}
-            {/*/>*/}
-            {/*    ) :*/}
-            <div className="w-screen flex h-screen">
-                {!userJoined ?
-                    <UserInfo
+            {!userJoined ? (
+                    <WelcomePage
                         username={userName}
                         setUsername={setUserName}
                         roomId={roomId}
                         setRoomId={setRoomId}
                         handleJoinRoom={handleJoinRoom}
-                    /> :
-
-                    <JoinedUsers socket={socket} users={joinedUser} roomName={roomId}/>
-                }
-                <div className="flex-1 flex flex-col justify-between">
-                    {/* Main area above the search bar */}
-                    <div className="p-6">
-                        {/* Room name and Current Song Queue */}
-                        <h1 className="text-2xl font-bold mb-2">Room name</h1>
-                        <AudioPlayer songs={currentQueue}/>
-                        <CurrentSongQueue songs={currentQueue}/>
-                    </div>
-
-                    {/* Text Input at the bottom */}
-                    <div className="flex justify-center pb-4 px-4">
-                        <div className="w-full">
-                            <TextInput/>
-                        </div>
-                    </div>
-                </div>
-                <PlayLists handleAddToQueue={handleAddToQueue}/>
-            </div>
-
-            {/* TODO Update Modal for more Error Messages */}
+                    />) :
+                    <Room 
+                        socket={socket} 
+                        joinedUser={joinedUser} 
+                        roomId={roomId} 
+                        setUserJoined={setUserJoined}
+                    />
+            }
+            {/* TODO Update Modal for more Error Messages */
+            }
             <Modal isOpen={isModalOpen} onClose={closeModal} message={error || "An unknown error occurred."}/>
             <Footer/>
         </div>
-    );
+    )
+        ;
 };

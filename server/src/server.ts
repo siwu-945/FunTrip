@@ -35,6 +35,7 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', ({roomId, username} : {roomId : string; username : string}) => {
         socket.join(roomId);
         if(!rooms[roomId]) rooms[roomId] = [];
+
         rooms[roomId].push({id: socket.id, username: username});
         console.log("user id: " + socket.id + " user name: " + username + " room id: " + roomId);
         io.to(roomId).emit('joinRoom', roomId);
@@ -50,6 +51,14 @@ io.on('connection', (socket) => {
                 callback(rooms[roomId]);
             } else {
                 callback([]);
+            }
+        })
+
+        socket.on("exitRoom", (roomId: string) => {
+            if(rooms[roomId]){
+                rooms[roomId] = rooms[roomId].filter((user) => user.id !== socket.id);
+                io.to(roomId).emit("userLeft", rooms[roomId]);
+                socket.leave(roomId);
             }
         })
     });
