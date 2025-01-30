@@ -30,7 +30,7 @@ const WelcomePage: React.FC<UserInfoProps> = ({username, setUsername, roomId, se
                         CONTACT
                     </a>
                     <a href="#" className="text-black hover:text-gray-600">
-                        PORTFOLIO
+                        NERDY
                     </a>
                 </div>
                 <button onClick={toggleMenu} className="md:hidden text-2xl">
@@ -55,7 +55,7 @@ const WelcomePage: React.FC<UserInfoProps> = ({username, setUsername, roomId, se
                             CONTACT
                         </a>
                         <a href="#" className="text-black hover:text-gray-600">
-                            PORTFOLIO
+                            NERDY
                         </a>
                     </div>
                 </div>
@@ -67,6 +67,7 @@ const WelcomePage: React.FC<UserInfoProps> = ({username, setUsername, roomId, se
                     Find Your Friends Now
                 </h1>
                 <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Your name</label>
                     <input
                         type="text"
                         placeholder="Your username"
@@ -74,6 +75,7 @@ const WelcomePage: React.FC<UserInfoProps> = ({username, setUsername, roomId, se
                         onChange={(e) => setUsername(e.target.value)}
                         className="block w-full mb-3 px-4 py-3 text-gray-700 border border-gray-300 rounded-md focus:ring focus:ring-gray-200 focus:border-gray-500"
                     />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Room ID</label>
                     <input
                         type="text"
                         placeholder="Enter room ID"
