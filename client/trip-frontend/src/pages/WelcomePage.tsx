@@ -17,7 +17,7 @@ const WelcomePage: React.FC<UserInfoProps> = ({username, setUsername, roomId, se
     };
 
     return (
-        <div className="w-full min-h-screen relative overflow-x-hidden">
+        <div id="welcome-page" className="w-full min-h-screen relative overflow-x-hidden">
             <nav className="flex justify-between items-center p-8">
                 <div className="flex flex-col">
                     <div className="text-3xl logo">Supreme Karaoke</div>

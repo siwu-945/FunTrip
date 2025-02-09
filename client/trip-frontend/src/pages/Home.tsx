@@ -7,7 +7,6 @@ import WelcomePage from "./WelcomePage.tsx";
 import Footer from "../components/Footer.tsx";
 import {getCookie, setCookie} from "../tools/Cookies.ts";
 import { Room } from './Room.tsx';
-import { User } from '../types/index.ts';
 
 export const Home = () => {
     const navigate = useNavigate();

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Socket } from 'socket.io-client';
 import { User } from '../../types/index';
+import { getCookie, removeCookie } from "../../tools/Cookies";
 
 
 interface JoinedUsersProps {
@@ -12,44 +13,19 @@ interface JoinedUsersProps {
 const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined }) => {
 
     const [joinedUser, setJoinedUsers] = useState<string[]>([]);
+
+    /** 
+     * Why cookies are used? 
+    Retain user session saved in cookies
+    So if user refreshes/redirect back to our main application, they are still in the same room
+    
+    We also have to rejoin the room, because everytime the web refreshes, it will generate a new socket
+    */
     useEffect(() => {
-        socket.emit("getUserNames", roomName, (users: string[]) => {
-            console.log("Users in the room:", users);
-            setJoinedUsers(users);
-        });
+        const savedUserName = getCookie("username");
+        const savedRoomId = getCookie("roomId");
 
-    }, []);
-
-    // TODO why isn't server picking up the getUserNames event?
-    useEffect(() => {
-        console.log("refreshing users");
-    
-        const handleConnect = () => {
-            console.log("Socket reconnected, emitting getUserNames: " + socket.connected);
-            console.log("roomName: " + roomName);
-            socket.emit("getUserNames", roomName, (users: string[]) => {
-                console.log("Users in the room:", users);
-                setJoinedUsers(users);
-            });
-        };
-    
-        // Listen for the 'connect' event
-        socket.on('connect', handleConnect);
-    
-        // If the socket is already connected, emit the event immediately
-        if (socket.connected) {
-            handleConnect();
-        }
-        
-        socket.onAnyOutgoing((event, args) => {
-            console.log(event)
-            // console.log(args)
-        })
-
-        // Cleanup the event listener
-        return () => {
-            socket.off('connect', handleConnect);
-        };
+        socket.emit("joinRoom", { roomId: savedRoomId, username: savedUserName });
     }, []);
 
     // listen and update for userJoined and userLeft events
@@ -79,6 +55,10 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
         window.history.pushState({}, "", "/");
 
         setUserJoined(false);
+
+        removeCookie("username");
+        removeCookie("roomId");
+        
         socket.emit("exitRoom", roomName);
         socket.emit("getUserNames", roomName, (users: string[]) => {
             setJoinedUsers(users);
