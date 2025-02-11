@@ -31,13 +31,11 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
     // listen and update for userJoined and userLeft events
     useEffect(() => {
         if (socket) {
-            socket.on("userJoined", (updatedUsers: User[]) => {
-                const names: string[] = updatedUsers.map((user) => user.username);
-                setJoinedUsers(names);
+            socket.on("userJoined", (updatedUserNames: string[]) => {
+                setJoinedUsers(updatedUserNames);
             });
-            socket.on("userLeft", (updatedUsers: User[]) => {
-                const names: string[] = updatedUsers.map((user) => user.username);
-                setJoinedUsers(names);
+            socket.on("userLeft", (updatedUserNames: string[]) => {
+                setJoinedUsers(updatedUserNames);
             });
         }
 
