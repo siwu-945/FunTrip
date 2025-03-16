@@ -1,86 +1,63 @@
-import React, { useEffect, useState} from "react";
-import {getSpotifyAuthURL} from "../tools/spotifyAuth.ts";
-import {useSearchParams} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { getSpotifyAuthURL } from "../tools/spotifyAuth.ts";
 import SpotifyWebApi from "spotify-web-api-node";
-import {SpotifyAuthCode} from "../spotify/SpotifyAuthCode.ts";
-
-const spotifyApi = new SpotifyWebApi();
 
 interface PlaylistProps {
     handleAddToQueue: (tracks: SpotifyApi.PlaylistTrackObject[]) => void; // Function that takes an array of strings and returns nothing (void)
+    accessToken: string | null;
 }
 
-const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
-    const [searchParams] = useSearchParams();
+const PlayLists: React.FC<PlaylistProps> = ({ handleAddToQueue, accessToken }) => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [userID, setUserID] = useState("");
     const [trackIDs, setTrackIDs] = useState<string[][]>([]);
-    const [authCode, setAuthCode] = useState("");
-    const [accessToken, setAccessToken] = useState("");
     const [selectedTrack, setSelectedTrack] = useState<string>("");
     const [songItems, setSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectedSongItems, setSelectedSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectAll, setSelectAll] = useState(false);
 
-    // set authorization code
-    useEffect(() => {
-        const code = searchParams.get("code");
-        if (code) {
-            setAuthCode(code);
-        }
-    }, [searchParams]);
+    const spotifyApi = new SpotifyWebApi();
 
-    // exchange auth code for access token
-    useEffect(() => {
-        const fetchAccessToken = async () => {
-            try {
-                if (authCode) {
-                    const token = await SpotifyAuthCode(authCode);
-                    setAccessToken(token);
-                }
-            } catch (error) {
-                const errorMessage = (error as Error).message || "Error fetching access token.";
-                window.dispatchEvent(
-                    new CustomEvent("modalError", {
-                        detail: {message: errorMessage},
-                    })
-                );
-            }
-        };
-        if (authCode) {
-            fetchAccessToken();
-        }
-    }, [authCode]);
-
-    // get the account info from the access token
+    // Set access token in Spotify API instance
     useEffect(() => {
         if (!accessToken) return;
+        console.log('Access token set:', accessToken);
         spotifyApi.setAccessToken(accessToken);
-        spotifyApi.getMe().then((data) => {
-            setUserID(data.body.id);
-        }).catch((error) => {
-            const errorMessage = error?.message || "Failed to fetch user account information.";
-            console.warn(errorMessage);
-        });
+    
+        // 检查 accessToken 是否有效
+        spotifyApi.getMe()
+            .then(() => {
+                console.log('Access token is valid');
+            })
+            .catch((error) => {
+                console.error('Access token is invalid:', error);
+                // 如果 accessToken 无效，尝试刷新
+                if (error.status === 401) {
+                    window.location.href = getSpotifyAuthURL();
+                }
+            });
     }, [accessToken]);
 
-    // return the playlists user have
+    // Fetch the playlists the user has
     useEffect(() => {
-        if (!userID && !accessToken) return;
+        if (!userID || !accessToken) return;
         spotifyApi.getUserPlaylists(userID)
             .then((data) => {
                 const trackData = data.body.items;
                 const newTrackIds = trackData.map((track) => [track.id, track.name]);
                 setTrackIDs(newTrackIds);
                 setShowDropdown(true); // Show the playlist dropdown after login
-            }).catch((error) => {
-            const errorMessage = error?.message || "Error retrieving playlists. Try again later.";
-            window.dispatchEvent(new CustomEvent('modalError', {
-                detail: {message: errorMessage}
-            }));
-        });
+            })
+            .catch((error) => {
+                console.error('Error fetching playlists:', error);
+                if (error.status === 401) {
+                    // 如果 accessToken 无效，尝试刷新或重新登录
+                    window.location.href = getSpotifyAuthURL();
+                }
+            });
     }, [userID, accessToken]);
 
+    // Reset selected song items when the selected playlist changes
     useEffect(() => {
         setSelectedSongItems([]);
     }, [selectedTrack]);
@@ -90,20 +67,23 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
         const playlistID = event.target.value;
         setSelectedTrack(playlistID);
         if (playlistID) {
-            spotifyApi.getPlaylist(playlistID).then((data) => {
-                setSongItems(data.body.tracks.items);
-            }).catch(() => {
-                // silent warning
-                console.warn("Failed to retrieve playlist. Please try again.");
-            });
+            spotifyApi.getPlaylist(playlistID)
+                .then((data) => {
+                    setSongItems(data.body.tracks.items);
+                })
+                .catch(() => {
+                    console.warn("Failed to retrieve playlist. Please try again.");
+                });
         }
     };
 
+    // Add selected songs to the queue
     const handleAddSongs = () => {
         handleAddToQueue(selectedSongItems);
         setSelectedSongItems([]);
     };
 
+    // Handle checkbox change for individual songs
     const handleCheckboxChange = (trackInfo: SpotifyApi.PlaylistTrackObject) => {
         const trackName = trackInfo.track?.name || "";
         const trackArtists = trackInfo.track?.artists.map((artist) => artist.name).join(", ") || "";
@@ -127,6 +107,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
         });
     };
 
+    // Handle select all checkbox
     const handleSelectAll = () => {
         if (selectAll) {
             setSelectedSongItems([]);
@@ -136,14 +117,14 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
         setSelectAll(!selectAll);
     };
 
+    // Check if a song is already added to the selected list
     function checkIfSongAlreadyAdded(songName: string): boolean {
         return selectedSongItems.some((item) => item.track?.name === songName);
     }
 
-    // TODO set refresh token
     return (
         <aside className="w-64 h-screen bg-gray-50 p-4 border-r flex flex-col">
-            {authCode ? (
+            {accessToken ? (
                 <>
                     <div>
                         <div className="flex items-center justify-between mb-4">
