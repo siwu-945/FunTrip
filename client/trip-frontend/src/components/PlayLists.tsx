@@ -1,8 +1,9 @@
-import React, { useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {getSpotifyAuthURL} from "../tools/spotifyAuth.ts";
 import {useSearchParams} from "react-router-dom";
 import SpotifyWebApi from "spotify-web-api-node";
 import {SpotifyAuthCode} from "../spotify/SpotifyAuthCode.ts";
+import { useAuth } from "../spotify/SpotifyuseAuth.ts";
 
 const spotifyApi = new SpotifyWebApi();
 
@@ -11,46 +12,14 @@ interface PlaylistProps {
 }
 
 const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
-    const [searchParams] = useSearchParams();
+    const { authCode, accessToken } = useAuth();
     const [showDropdown, setShowDropdown] = useState(false);
     const [userID, setUserID] = useState("");
     const [trackIDs, setTrackIDs] = useState<string[][]>([]);
-    const [authCode, setAuthCode] = useState("");
-    const [accessToken, setAccessToken] = useState("");
     const [selectedTrack, setSelectedTrack] = useState<string>("");
     const [songItems, setSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectedSongItems, setSelectedSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectAll, setSelectAll] = useState(false);
-
-    // set authorization code
-    useEffect(() => {
-        const code = searchParams.get("code");
-        if (code) {
-            setAuthCode(code);
-        }
-    }, [searchParams]);
-
-    // exchange auth code for access token
-    useEffect(() => {
-        const fetchAccessToken = async () => {
-            try {
-                if (authCode) {
-                    const token = await SpotifyAuthCode(authCode);
-                    setAccessToken(token);
-                }
-            } catch (error) {
-                const errorMessage = (error as Error).message || "Error fetching access token.";
-                window.dispatchEvent(
-                    new CustomEvent("modalError", {
-                        detail: {message: errorMessage},
-                    })
-                );
-            }
-        };
-        if (authCode) {
-            fetchAccessToken();
-        }
-    }, [authCode]);
 
     // get the account info from the access token
     useEffect(() => {
@@ -140,7 +109,6 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
         return selectedSongItems.some((item) => item.track?.name === songName);
     }
 
-    // TODO set refresh token
     return (
         <aside className="w-64 h-screen bg-gray-50 p-4 border-r flex flex-col">
             {authCode ? (
