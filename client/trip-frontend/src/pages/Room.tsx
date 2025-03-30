@@ -11,9 +11,10 @@ interface RoomProps {
     socket: Socket;
     roomId: string;
     setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
+    currentUser: string;
 }
 
-export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined }) => {
+export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
 
     const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
@@ -22,12 +23,17 @@ export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined }) =>
 
     return (
         <div className="w-screen flex h-screen">
-            <JoinedUsers socket={socket} roomName={roomId} setUserJoined={setUserJoined} />
+            <JoinedUsers 
+                socket={socket} 
+                roomName={roomId} 
+                setUserJoined={setUserJoined} 
+                currentUser={currentUser}
+            />
             <div className="flex-1 flex flex-col justify-between">
                 {/* Main area above the search bar */}
                 <div className="p-6">
                     {/* Room name and Current Song Queue */}
-                    <h1 className="text-2xl font-bold mb-2">Room name</h1>
+                    <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
                     <AudioPlayer songs={currentQueue} />
                     <CurrentSongQueue songs={currentQueue} />
                 </div>
