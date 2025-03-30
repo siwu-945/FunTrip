@@ -15,7 +15,6 @@ interface RoomProps {
 }
 
 export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
-
     const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         setCurrentQueue((prev) => [...prev, ...selectedTracks]);
