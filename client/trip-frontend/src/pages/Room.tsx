@@ -16,13 +16,21 @@ interface RoomProps {
 export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined }) => {
 
     const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
+    const [messages, setMessages] = useState<string[]>([]);
+
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         setCurrentQueue((prev) => [...prev, ...selectedTracks]);
     };
 
+    const handleSendMessage = (message: string) => {
+        if (message.trim()) {
+            setMessages([...messages, message]);
+        }
+    };
+
     return (
         <div className="w-screen flex h-screen">
-            <JoinedUsers socket={socket} roomName={roomId} setUserJoined={setUserJoined} />
+            <JoinedUsers socket={socket} roomName={roomId} setUserJoined={setUserJoined} messages={messages}  />
             <div className="flex-1 flex flex-col justify-between">
                 {/* Main area above the search bar */}
                 <div className="p-6">
@@ -35,7 +43,7 @@ export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined }) =>
                 {/* Text Input at the bottom */}
                 <div className="flex justify-center pb-4 px-4">
                     <div className="w-full">
-                        <TextInput />
+                    <TextInput onSendMessage={handleSendMessage} />
                     </div>
                 </div>
             </div>
