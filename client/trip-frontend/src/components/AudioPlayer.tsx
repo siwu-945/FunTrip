@@ -1,85 +1,92 @@
 import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
-import { FaPlay, FaPause, FaStepForward } from "react-icons/fa";
+import { FaStepForward } from "react-icons/fa";
+import { DownloadResponse, SongObj } from "../types";
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
-type DownloadResponse = {
-    audiolink: string;
-}
-
-const AudioPlayer: React.FC<{ songs: SpotifyApi.PlaylistTrackObject[] }> = ({ songs }) => {
-    const [currentSongId, setCurrentSongId] = useState<string>(songs[0]?.track?.id || "");
+const AudioPlayer: React.FC<{ songs: SongObj[] }> = ({ songs }) => {
     const [currentAudioUrl, setCurrentAudioUrl] = useState<string>('');
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [populatedSongInfo, setPopulatedSongInfo] = useState<SongObj[]>([]);
     const audioRef = useRef<HTMLAudioElement | null>(null);
-
-
 
 
     const retrieveAudio = async (songIndex) => {
         try {
-            // console.log(songs[0]?.track)
-            // console.log(songs)
-            console.log("current index: " + currentIndex);
-            // console.log("currentSongName" + songs[currentIndex]?.track?.name)
-            const downloadedSong = await axios.post<DownloadResponse>(`${serverURL}/download-song`, { 'song': songs[songIndex]?.track?.name })
-            setCurrentAudioUrl(downloadedSong.data.audiolink);
+            const downloadedSong = await axios.post<DownloadResponse>(`${serverURL}/download-song`, { 'song': songs[songIndex]?.spotifyData.track?.name })
             return downloadedSong.data.audiolink;
         } catch {
             console.log("Error getting audio url")
+            return null;
         }
 
     };
+    const handleFirstSong = async() => {
+        const firstAudio = await retrieveAudio(0);
+        setCurrentAudioUrl(firstAudio);
+    }
 
+    // Play the first song
     useEffect(() => {
-        if (songs.length > 0) {
-            retrieveAudio(currentIndex);
+        if (songs.length > 0 && currentIndex == 0) {
+            handleFirstSong()
         }
-    }, [songs, currentIndex]);
 
+        const fetchAudioUrls = async () => {
+            const updatedSongs = await Promise.all(
+                songs.map(async (song) => {
+                    if (!song.audioUrl) {
+                        const url = await axios
+                            .post<DownloadResponse>(`${serverURL}/download-song`, {
+                                song: song.spotifyData.track?.name,
+                            })
+                            .then((res) => res.data.audiolink)
+                            .catch(() => null);
 
-    //TODO
-    const togglePlay = () => {
-        if (audioRef.current) {
-            // if (isPlaying) {
-            //     audioRef.current.pause();
-            // } else {
-            //     audioRef.current.play();
-            // }
-            setIsPlaying(!isPlaying);
+                        return { ...song, audioUrl: url };
+                    }
+                    return song;
+                })
+            );
+
+            setPopulatedSongInfo(updatedSongs)
         }
-    };
+        fetchAudioUrls();
+    }, [songs]);
 
     const handleNext = async () => {
         if (currentIndex + 1 >= songs.length){
-            console.log("currentIndex " + currentIndex)
-
             console.log("index out of range, song len: " + songs.length)
             return;
         }
         const nextSongIdx = currentIndex + 1;
-        const audioUrl = await retrieveAudio(nextSongIdx);
-
-        if(audioUrl){
-            setCurrentIndex(nextSongIdx);
-            audioRef.current.currentTime = 0;  
-            if (isPlaying) {                  
-                audioRef.current.play();     
-            }
+        let audioUrl = populatedSongInfo[nextSongIdx]?.audioUrl;
+        if(!audioUrl){
+            console.log("Audio url is empty, retrying...");
+            audioUrl = await retrieveAudio(nextSongIdx);   
         }
+        setCurrentAudioUrl(audioUrl);
+        setCurrentIndex(nextSongIdx);
+        audioRef.current.currentTime = 0;  
     };
+
+    const togglePlay = () => {
+        console.log("Current song index:" + currentIndex);
+        console.log("Current song playing: " + populatedSongInfo[currentIndex]?.spotifyData.track.name);
+        // console.log("Url: " + populatedSongInfo[currentIndex]?.audioUrl);
+        // console.log("current audio: " + currentAudioUrl);
+    }
 
     return (
         <div className="flex items-center justify-between w-full bg-[#585858] p-4 rounded-lg">          
             <div className="flex-shrink-0 min-w-[200px] max-w-[40%]">
                 <div className="flex flex-col">
                     <span className="font-semibold text-white truncate max-w-xs">
-                        {songs[currentIndex] && songs[currentIndex].track.name || 'No song selected'}
+                        {songs[currentIndex] && songs[currentIndex].spotifyData.track.name || 'No song selected'}
                     </span>
                     <span className="text-[#e0dede] text-sm truncate max-w-xs">
-                        {songs[currentIndex] && songs[currentIndex].track?.artists[0]?.name || 'Unknown artist'}
+                        {songs[currentIndex] && songs[currentIndex].spotifyData.track?.artists[0]?.name || 'Unknown artist'}
                     </span>
                 </div>
             </div>

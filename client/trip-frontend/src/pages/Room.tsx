@@ -3,21 +3,17 @@ import CurrentSongQueue from "../components/CurrentSongQueue"
 import PlayLists from "../components/PlayLists"
 import TextInput from "../components/TextInput"
 import JoinedUsers from "../components/Users/JoinedUsers"
-import { Socket } from 'socket.io-client';
-import { User } from '../types/index.ts';
+import { RoomProps, SongObj, User } from '../types/index.ts';
 import { useState } from "react"
 
-interface RoomProps {
-    socket: Socket;
-    roomId: string;
-    setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
-    currentUser: string;
-}
-
 export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
-    const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
+    const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
-        setCurrentQueue((prev) => [...prev, ...selectedTracks]);
+        const songObjs : SongObj[] = selectedTracks.map((track) => ({
+            spotifyData : track,
+        }));
+
+        setCurrentQueue((prev) => [...prev, ...songObjs]);
     };
 
     return (

@@ -5,6 +5,8 @@ songName = sys.argv[1]
 ydl_opts = {
     'quiet' : True
 }
+
+# TODO: add handling error
 search_query = f"ytsearch:{songName}"
 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
     info = ydl.extract_info(search_query, download=False)
