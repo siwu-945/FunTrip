@@ -8,9 +8,10 @@ interface JoinedUsersProps {
     roomName: string;
     socket: Socket;
     setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
+    currentUser: string;
 }
 
-const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined }) => {
+const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined, currentUser }) => {
 
     const [joinedUser, setJoinedUsers] = useState<string[]>([]);
 
@@ -86,8 +87,14 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
             <h3>Welcome to room {roomName}</h3>
             <nav>
                 <ul>
+
                     {joinedUser.map((username, idx) => (
-                        <li key={idx} className="py-2 px-4 text-sm text-gray-700 hover:bg-gray-200 rounded">
+                        <li 
+                            key={idx} 
+                            className={`py-2 px-4 text-sm hover:bg-gray-200 rounded ${
+                                username === currentUser ? "text-orange-500 font-medium" : "text-gray-700"
+                            }`}
+                        >
                             {username}
                         </li>
                     ))}

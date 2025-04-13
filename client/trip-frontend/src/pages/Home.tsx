@@ -106,6 +106,7 @@ export const Home = () => {
                         // joinedUser={joinedUser} 
                         roomId={roomId} 
                         setUserJoined={setUserJoined}
+                        currentUser={userName}
                     />
             }
             {/* TODO Update Modal for more Error Messages */
