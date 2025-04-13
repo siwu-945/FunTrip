@@ -17,18 +17,27 @@ const AudioPlayer: React.FC<{ songs: SongObj[] }> = ({ songs }) => {
             const downloadedSong = await axios.post<DownloadResponse>(`${serverURL}/download-song`, { 'song': songs[songIndex]?.spotifyData.track?.name })
             return downloadedSong.data.audiolink;
         } catch {
-            console.log("Error getting audio url")
+            window.dispatchEvent(
+                new CustomEvent("modalError", {
+                    detail: { message: "Fail to find the song, try remove the current song and re-add it" },
+                })
+            );            
             return null;
         }
 
     };
     const handleFirstSong = async() => {
+        // make sure we are not overriding the first playing song when new songs are added
+        if(audioRef.current !== null && !audioRef.current.paused){
+            return;
+        }
         const firstAudio = await retrieveAudio(0);
         setCurrentAudioUrl(firstAudio);
     }
 
     // Play the first song
     useEffect(() => {
+        console.log(audioRef.current);
         if (songs.length > 0 && currentIndex == 0) {
             handleFirstSong()
         }
