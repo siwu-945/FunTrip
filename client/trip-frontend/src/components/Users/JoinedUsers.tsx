@@ -92,7 +92,7 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
                         <li 
                             key={idx} 
                             className={`py-2 px-4 text-sm hover:bg-gray-200 rounded ${
-                                username === currentUser ? "text-orange-500 font-medium" : "text-gray-700"
+                                username === currentUser ? "bg-orange-100 text-orange-700 font-medium" : "text-gray-700"
                             }`}
                         >
                             {username}
