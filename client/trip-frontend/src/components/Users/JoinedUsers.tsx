@@ -3,15 +3,15 @@ import { Socket } from 'socket.io-client';
 import { User } from '../../types/index';
 import { getCookie, removeCookie } from "../../tools/Cookies";
 
-
 interface JoinedUsersProps {
     roomName: string;
     socket: Socket;
     setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
+    messages: string[];
     currentUser: string;
 }
 
-const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined, currentUser }) => {
+const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined, currentUser， messages}) => {
 
     const [joinedUser, setJoinedUsers] = useState<string[]>([]);
 
@@ -57,37 +57,51 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
 
         removeCookie("username");
         removeCookie("roomId");
-        
+
         socket.emit("exitRoom", roomName);
         socket.emit("getUserNames", roomName, (users: string[]) => {
             setJoinedUsers(users);
         });
     };
 
-
     return (
-        <aside className="w-64 h-screen bg-gray-50 p-4 overflow-y-auto border-r">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                    <span className="font-semibold text-2xl text-gray-700">
-                        <a href="#" className="font-semibold text-2xl text-gray-700 no-underline hover:text-gray-900">
-                            Karaoke King
-                        </a>
-                    </span>
+        <aside className="w-64 h-screen bg-gray-50 p-4 overflow-y-auto border-r flex flex-col justify-between">
+            <div>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                        <span className="font-semibold text-2xl text-gray-700">
+                            <a href="#" className="font-semibold text-2xl text-gray-700 no-underline hover:text-gray-900">
+                                Karaoke King
+                            </a>
+                        </span>
+                    </div>
+                    <div>
+                        <i
+                            className="fas fa-sign-out-alt text-gray-600"
+                            title="Leave Room"
+                            onClick={handleUserLeave}
+                        ></i>
+                    </div>
                 </div>
-                <div>
-                    <i
-                        className="fas fa-sign-out-alt text-gray-600"
-                        title="Leave Room"
-                        onClick={handleUserLeave}
-                    ></i>
-
-                </div>
+                <h3>Welcome to room {roomName}</h3>
+                <nav>
+                    <ul>
+                        {joinedUser.map((username, idx) => (
+                            <li key={idx} className="py-2 px-4 text-sm text-gray-700 hover:bg-gray-200 rounded">
+                                {username}
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
             </div>
-            <h3>Welcome to room {roomName}</h3>
-            <nav>
+            <div className="h-1/3 overflow-y-auto border-t pt-2">
+                <h4>Messages</h4>
                 <ul>
-
+                    {messages.map((message, idx) => (
+                        <li key={idx} className="py-2 px-4 text-sm text-gray-700 hover:bg-gray-200 rounded">
+                            {message}
+                        </li>
+                    ))}
                     {joinedUser.map((username, idx) => (
                         <li 
                             key={idx} 
@@ -99,9 +113,8 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
                         </li>
                     ))}
                 </ul>
-            </nav>
+            </div>
         </aside>
     );
 };
-
 export default JoinedUsers;

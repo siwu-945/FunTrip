@@ -6,7 +6,17 @@ import JoinedUsers from "../components/Users/JoinedUsers"
 import { RoomProps, SongObj, User } from '../types/index.ts';
 import { useState } from "react"
 
+interface RoomProps {
+    socket: Socket;
+    roomId: string;
+    setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
 export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
+
+    const [currentQueue, setCurrentQueue] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
+    const [messages, setMessages] = useState<string[]>([]);
+
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         const songObjs : SongObj[] = selectedTracks.map((track) => ({
@@ -16,12 +26,20 @@ export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined, curr
         setCurrentQueue((prev) => [...prev, ...songObjs]);
     };
 
+    const handleSendMessage = (message: string) => {
+        if (message.trim()) {
+            setMessages([...messages, message]);
+        }
+    };
+
     return (
         <div className="w-screen flex h-screen">
+
             <JoinedUsers 
                 socket={socket} 
                 roomName={roomId} 
                 setUserJoined={setUserJoined} 
+                messages={messages}
                 currentUser={currentUser}
             />
             <div className="flex-1 flex flex-col justify-between">
@@ -36,7 +54,7 @@ export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined, curr
                 {/* Text Input at the bottom */}
                 <div className="flex justify-center pb-4 px-4">
                     <div className="w-full">
-                        <TextInput />
+                    <TextInput onSendMessage={handleSendMessage} />
                     </div>
                 </div>
             </div>
