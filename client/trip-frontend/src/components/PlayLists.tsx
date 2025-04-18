@@ -3,13 +3,10 @@ import {getSpotifyAuthURL} from "../tools/spotifyAuth.ts";
 import {useSearchParams} from "react-router-dom";
 import SpotifyWebApi from "spotify-web-api-node";
 import {SpotifyAuthCode} from "../spotify/SpotifyAuthCode.ts";
-import { useAuth } from "../spotify/SpotifyuseAuth.ts";
+import { useAuth } from "../spotify/SpotifyUseAuth.ts";
+import { PlaylistProps } from "../types/index.ts";
 
 const spotifyApi = new SpotifyWebApi();
-
-interface PlaylistProps {
-    handleAddToQueue: (tracks: SpotifyApi.PlaylistTrackObject[]) => void; // Function that takes an array of strings and returns nothing (void)
-}
 
 const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     const { authCode, accessToken } = useAuth();

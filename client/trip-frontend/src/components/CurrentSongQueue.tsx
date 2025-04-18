@@ -1,11 +1,9 @@
 import React from 'react';
+import { SongObj } from '../types';
 
-interface SongQueueProps {
-    songs: SpotifyApi.PlaylistTrackObject[]; // Function that takes an array of strings and returns nothing (void)
-}
 
 // TODO update the song names with actual added songs
-const CurrentSongQueue: React.FC<SongQueueProps> = ({songs}) => {
+const CurrentSongQueue: React.FC<{songs: SongObj[]}> = ({songs}) => {
 
     return (
         <div className="bg-gray-100 rounded-md mt-2 w-full flex flex-col h-[60vh]">
@@ -20,7 +18,7 @@ const CurrentSongQueue: React.FC<SongQueueProps> = ({songs}) => {
                             key={index}
                             className="text-gray-700 py-1 px-2 bg-white rounded shadow-sm hover:bg-gray-50"
                         >
-                            {index + 1}. {song.track?.name || ""}
+                            {index + 1}. {song.spotifyData.track?.name || ""}
                         </li>
                     ))}
                 </ul>

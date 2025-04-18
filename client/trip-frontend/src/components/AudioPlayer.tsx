@@ -1,48 +1,128 @@
-import React, {useState, useEffect} from "react";
+import axios from "axios";
+import React, { useState, useEffect, useRef } from "react";
+import { FaStepForward } from "react-icons/fa";
+import { DownloadResponse, SongObj } from "../types";
 
-const AudioPlayer: React.FC<{ songs: SpotifyApi.PlaylistTrackObject[] }> = ({ songs }) => {
-    const [currentSongId, setCurrentSongId] = useState<string>(songs[0]?.track?.id || "");
+const serverURL = import.meta.env.VITE_SERVER_URL;
 
-    const handleSongEnd = () => {
-        const currentIndex = songs.findIndex((song) => song.track?.id === currentSongId);
-        const nextSong = songs[currentIndex + 1];
-        if (nextSong) {
-            setCurrentSongId(nextSong.track?.id || "");
+const AudioPlayer: React.FC<{ songs: SongObj[] }> = ({ songs }) => {
+    const [currentAudioUrl, setCurrentAudioUrl] = useState<string>('');
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [populatedSongInfo, setPopulatedSongInfo] = useState<SongObj[]>([]);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+
+    const retrieveAudio = async (songIndex) => {
+        try {
+            const downloadedSong = await axios.post<DownloadResponse>(`${serverURL}/download-song`, { 'song': songs[songIndex]?.spotifyData.track?.name })
+            return downloadedSong.data.audiolink;
+        } catch {
+            window.dispatchEvent(
+                new CustomEvent("modalError", {
+                    detail: { message: "Fail to find the song, try remove the current song and re-add it" },
+                })
+            );            
+            return null;
         }
-    };
 
+    };
+    const handleFirstSong = async() => {
+        // make sure we are not overriding the first playing song when new songs are added
+        if(audioRef.current !== null && !audioRef.current.paused){
+            return;
+        }
+        const firstAudio = await retrieveAudio(0);
+        setCurrentAudioUrl(firstAudio);
+    }
+
+    // Play the first song
     useEffect(() => {
-        const trackId = songs[0]?.track?.id;
-        if (trackId) setCurrentSongId(trackId);
+        console.log(audioRef.current);
+        if (songs.length > 0 && currentIndex == 0) {
+            handleFirstSong()
+        }
+
+        const fetchAudioUrls = async () => {
+            const updatedSongs = await Promise.all(
+                songs.map(async (song) => {
+                    if (!song.audioUrl) {
+                        const url = await axios
+                            .post<DownloadResponse>(`${serverURL}/download-song`, {
+                                song: song.spotifyData.track?.name,
+                            })
+                            .then((res) => res.data.audiolink)
+                            .catch(() => null);
+
+                        return { ...song, audioUrl: url };
+                    }
+                    return song;
+                })
+            );
+
+            setPopulatedSongInfo(updatedSongs)
+        }
+        fetchAudioUrls();
     }, [songs]);
 
+    const handleNext = async () => {
+        if (currentIndex + 1 >= songs.length){
+            console.log("index out of range, song len: " + songs.length)
+            return;
+        }
+        const nextSongIdx = currentIndex + 1;
+        let audioUrl = populatedSongInfo[nextSongIdx]?.audioUrl;
+        if(!audioUrl){
+            console.log("Audio url is empty, retrying...");
+            audioUrl = await retrieveAudio(nextSongIdx);   
+        }
+        setCurrentAudioUrl(audioUrl);
+        setCurrentIndex(nextSongIdx);
+        audioRef.current.currentTime = 0;  
+    };
+
+    const togglePlay = () => {
+        console.log("Current song index:" + currentIndex);
+        console.log("Current song playing: " + populatedSongInfo[currentIndex]?.spotifyData.track.name);
+        // console.log("Url: " + populatedSongInfo[currentIndex]?.audioUrl);
+        // console.log("current audio: " + currentAudioUrl);
+    }
+
     return (
-        <div>
-            {songs.length !== 0 && (
-                <>
-                    <div className="w-full p-4">
-                        {currentSongId && (
-                            <iframe
-                                src={`https://open.spotify.com/embed/track/${currentSongId}?utm_source=generator`}
-                                width="100%"
-                                height="100"
-                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                                loading="lazy"
-                                className="shadow-lg"
-                            ></iframe>
-                        )}
-                    </div>
-                    <div className="p-4">
-                        <button
-                            onClick={handleSongEnd}
-                            className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200"
+        <div className="flex items-center justify-between w-full bg-[#585858] p-4 rounded-lg">          
+            <div className="flex-shrink-0 min-w-[200px] max-w-[40%]">
+                <div className="flex flex-col">
+                    <span className="font-semibold text-white truncate max-w-xs">
+                        {songs[currentIndex] && songs[currentIndex].spotifyData.track.name || 'No song selected'}
+                    </span>
+                    <span className="text-[#e0dede] text-sm truncate max-w-xs">
+                        {songs[currentIndex] && songs[currentIndex].spotifyData.track?.artists[0]?.name || 'Unknown artist'}
+                    </span>
+                </div>
+            </div>
+
+            {/* Audio controls on the right */}
+            <div className="flex-grow flex gap-4">
+                <div className="flex items-center gap-2">
+                        <button 
+                            onClick={handleNext}
+                            className="text-white p-2 rounded-full bg-[#6a6a6a] transition"
                         >
-                            Next Song
+                            <FaStepForward size={16} />
                         </button>
-                    </div>
-                </>
-            )}
+                </div>
+                {currentAudioUrl && (
+                    <audio
+                        ref={audioRef}
+                        src={currentAudioUrl}
+                        onEnded={handleNext}
+                        onPlay={togglePlay}
+                        controls autoPlay
+                        className="w-full h-8"
+                    />
+                )}
+            </div>
         </div>
+
     );
 };
 

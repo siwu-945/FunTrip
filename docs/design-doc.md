@@ -16,6 +16,9 @@ The Collaborative Party DJ Web App solves the problem of managing music playlist
    1. socket.io ensures instant updates to playlists across all connected users.
 4. Spotify Integration and Why is User Data Safe
    ![diagram](./diagram.jpg)
+5. As mentioned in issue #11, using Spotify iframe doesn't help, we tried using service worker, adding proxy, XSS? but these are not ideal and won't give us the desired customization. Thanks to the help of [yt-dlp](https://github.com/yt-dlp/yt-dlp), we were able to get raw audio stream url and embed it in our website.
+   ![diagram](./custom-audio-player-design.png)
+
 
 ## API Design (TODO)
 #### Authentication
