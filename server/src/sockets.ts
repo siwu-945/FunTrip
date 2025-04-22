@@ -2,6 +2,7 @@ import { Socket, Server } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import { User } from './types/user';
 import { RoomInfo } from './types/room';
+import { SongObj } from './types';
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
@@ -22,6 +23,29 @@ export default function initSockets(httpServer: HTTPServer) {
         return rooms[roomId] != null;
     }
 
+    /**
+     * Audio Player Management
+     */
+
+
+    /**
+     * Playlist management
+     */
+    const updateCurrentSongQueue = (roomId : string) => {
+        io.emit("updateSongStream", [...rooms[roomId].getSongStream])
+    }
+
+    const addSongToStream = (roomID : string, selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
+        rooms[roomID].addSongToStream(selectedTracks);
+        updateCurrentSongQueue(roomID)
+    };
+
+    const removeSongFromStream = () => {
+
+    }
+    /**
+     * User Management
+     */
     const createAndJoinRoom = (roomId: string, socket : Socket) => {
         if(!roomExist(roomId)){
             rooms[roomId] = new RoomInfo(roomId);
@@ -65,7 +89,8 @@ export default function initSockets(httpServer: HTTPServer) {
 
             createAndJoinRoom(roomId, socket);
             addUserToRoom(socket.id, roomId, username);
-
+            updateCurrentSongQueue(roomId);
+            
             io.to(roomId).emit('joinRoom', roomId);
             io.to(roomId).emit('userJoined', [...rooms[roomId].getUsers.keys()]);
     
@@ -77,6 +102,16 @@ export default function initSockets(httpServer: HTTPServer) {
             socket.on("exitRoom", (roomName: string) => {
                 disconnectUserFromRoom(roomName, username, io);
                 socket.leave(roomName);
+            })
+
+            socket.on("addSongToStream", ({selectedTracks} : {selectedTracks: SpotifyApi.PlaylistTrackObject[]}) => {
+                console.log("a new song is added")
+                if (rooms[roomId]) {
+                    addSongToStream(roomId, selectedTracks)
+                }
+                else{
+                    console.error("No such room exist")
+                }
             })
         });
     

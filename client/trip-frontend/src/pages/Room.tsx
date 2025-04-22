@@ -4,17 +4,27 @@ import PlayLists from "../components/PlayLists"
 import TextInput from "../components/TextInput"
 import JoinedUsers from "../components/Users/JoinedUsers"
 import { RoomProps, SongObj, User } from '../types/index.ts';
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
-        const songObjs : SongObj[] = selectedTracks.map((track) => ({
-            spotifyData : track,
-        }));
-
-        setCurrentQueue((prev) => [...prev, ...songObjs]);
+        socket.emit("addSongToStream", {selectedTracks})
     };
+
+    useEffect(() => {
+        console.log("a new user joined")
+        if(socket){
+            socket.on("updateSongStream", (songStream : SongObj[]) => {
+                setCurrentQueue((prev) => [...prev, ...songStream])
+            })
+        }
+        return() =>{
+            if(socket){
+                socket.off("updateSongStream");
+            }
+        }
+    },[socket]);
 
     return (
         <div className="w-screen flex h-screen">
