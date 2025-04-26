@@ -89,5 +89,9 @@ export default function initSockets(httpServer: HTTPServer) {
                 callback([]);
             }
         })
+        socket.on('sendMessage', ({ roomId, message }) => {
+            // broadcast the message to all clients in the room including the sender
+            io.to(roomId).emit('receiveMessage', message);
+        });
     });
 }

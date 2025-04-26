@@ -1,5 +1,20 @@
 import { Socket } from 'socket.io-client';
 
+export interface Message {
+    sender: string;
+    content: string;
+    timestamp: number; // Unix timestamp in milliseconds
+}
+
+export interface FormattedMessage {
+    type: 'date' | 'message';
+    content: string;
+}
+
+export interface TextInputProps {
+    onSendMessage: (message: string) => void;
+}
+
 export interface Song {
     id: string;
     name: string;
@@ -16,7 +31,7 @@ export interface PlaylistProps {
     handleAddToQueue: (tracks: SpotifyApi.PlaylistTrackObject[]) => void; // Function that takes an array of strings and returns nothing (void)
 }
 
-export interface RoomProps {
+export interface RoomComponentProps {
     socket: Socket;
     roomId: string;
     setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
