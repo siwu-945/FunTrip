@@ -3,27 +3,9 @@ import CurrentSongQueue from "../components/CurrentSongQueue"
 import PlayLists from "../components/PlayLists"
 import TextInput from "../components/TextInput"
 import JoinedUsers from "../components/Users/JoinedUsers"
-import { SongObj } from '../types/index.ts';
+import { SongObj, Message, FormattedMessage, RoomComponentProps } from '../types/index';
 import { useState, useEffect } from "react"
 import { Socket } from 'socket.io-client';
-
-interface Message {
-    sender: string;
-    content: string;
-    timestamp: number; // Unix timestamp in milliseconds
-}
-
-interface FormattedMessage {
-    type: 'date' | 'message';
-    content: string;
-}
-
-interface RoomComponentProps {
-    socket: Socket;
-    roomId: string;
-    setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
-    currentUser: string;
-}
 
 export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
@@ -49,13 +31,14 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
     };
 
     const handleSendMessage = (content: string) => {
-        if (content.trim()) {
+        if (content) {
             const messageObj: Message = {
                 sender: currentUser,
-                content: content.trim(),
+                content: content,
                 timestamp: Date.now()
             };
             
+            // Only emit the message to server, don't add to local state
             // The message will be added when received through socket
             socket.emit('sendMessage', { roomId, message: messageObj });
         }

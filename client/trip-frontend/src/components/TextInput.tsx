@@ -1,15 +1,12 @@
 import React, { useState } from "react";
-
-interface TextInputProps {
-    onSendMessage: (message: string) => void;
-}
+import { TextInputProps } from '../types/index';
 
 const TextInput: React.FC<TextInputProps> = ({ onSendMessage }) => {
     const [newMessage, setNewMessage] = useState('');
 
     const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (newMessage.trim()) {
+        if (newMessage) {
             onSendMessage(newMessage);
             setNewMessage('');
         }
