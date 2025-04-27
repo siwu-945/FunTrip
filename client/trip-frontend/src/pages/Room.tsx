@@ -9,7 +9,7 @@ import { useEffect, useState } from "react"
 export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
-        socket.emit("addSongToStream", {selectedTracks})
+        socket.emit("addSongToStream", {selectedTracks, roomId})
     };
 
     useEffect(() => {
@@ -17,6 +17,9 @@ export const Room : React.FC<RoomProps> = ({ socket, roomId, setUserJoined, curr
         if(socket){
             socket.on("updateSongStream", (songStream : SongObj[]) => {
                 setCurrentQueue((prev) => [...prev, ...songStream])
+            })
+            socket.on("getCurrentSongStream", (songStream : SongObj[]) => {
+                setCurrentQueue(songStream)
             })
         }
         return() =>{

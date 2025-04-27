@@ -66,6 +66,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     };
 
     const handleAddSongs = () => {
+        console.log(selectedSongItems.forEach((x) => console.log(x.track.name)))
         handleAddToQueue(selectedSongItems);
         setSelectedSongItems([]);
     };

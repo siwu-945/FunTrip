@@ -37,7 +37,6 @@ const AudioPlayer: React.FC<{ songs: SongObj[] }> = ({ songs }) => {
 
     // Play the first song
     useEffect(() => {
-        console.log(audioRef.current);
         if (songs.length > 0 && currentIndex == 0) {
             handleFirstSong()
         }

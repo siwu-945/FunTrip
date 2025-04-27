@@ -31,13 +31,17 @@ export default function initSockets(httpServer: HTTPServer) {
     /**
      * Playlist management
      */
-    const updateCurrentSongQueue = (roomId : string) => {
-        io.emit("updateSongStream", [...rooms[roomId].getSongStream])
+    const getCurrentSongQueue = (roomId : string) => {
+        io.emit("getCurrentSongStream", [...rooms[roomId].getSongStream])
+    }
+
+    const updateCurrentSongQueue = (newSongs : SongObj[]) => {
+        io.emit("updateSongStream", [...newSongs])
     }
 
     const addSongToStream = (roomID : string, selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
-        rooms[roomID].addSongToStream(selectedTracks);
-        updateCurrentSongQueue(roomID)
+        const newSongs = rooms[roomID].addSongToStream(selectedTracks);
+        updateCurrentSongQueue(newSongs)
     };
 
     const removeSongFromStream = () => {
@@ -89,7 +93,7 @@ export default function initSockets(httpServer: HTTPServer) {
 
             createAndJoinRoom(roomId, socket);
             addUserToRoom(socket.id, roomId, username);
-            updateCurrentSongQueue(roomId);
+            getCurrentSongQueue(roomId);
             
             io.to(roomId).emit('joinRoom', roomId);
             io.to(roomId).emit('userJoined', [...rooms[roomId].getUsers.keys()]);
@@ -103,16 +107,6 @@ export default function initSockets(httpServer: HTTPServer) {
                 disconnectUserFromRoom(roomName, username, io);
                 socket.leave(roomName);
             })
-
-            socket.on("addSongToStream", ({selectedTracks} : {selectedTracks: SpotifyApi.PlaylistTrackObject[]}) => {
-                console.log("a new song is added")
-                if (rooms[roomId]) {
-                    addSongToStream(roomId, selectedTracks)
-                }
-                else{
-                    console.error("No such room exist")
-                }
-            })
         });
     
         socket.on("getUserNames", (roomId: string, callback: (users: string[]) => void) => {
@@ -122,6 +116,16 @@ export default function initSockets(httpServer: HTTPServer) {
             } else {
                 console.log("No users in the room");
                 callback([]);
+            }
+        })
+
+        socket.on("addSongToStream", ({selectedTracks, roomId} : {selectedTracks: SpotifyApi.PlaylistTrackObject[], roomId : string}) => {
+            console.log("a new song is added")
+            if (rooms[roomId]) {
+                addSongToStream(roomId, selectedTracks)
+            }
+            else{
+                console.error("No such room exist")
             }
         })
     });

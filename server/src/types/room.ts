@@ -44,9 +44,7 @@ export class RoomInfo{
             spotifyData : track,
         }));
         this.songStream.push(...songObjs);
-        this.songStream.forEach((x) =>{
-            console.log(x.spotifyData.track?.name)
-        })
+        return songObjs;
     }
 
     public get getSongStream() : SongObj[]{
