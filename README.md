@@ -1,6 +1,7 @@
 # Supreme Karaoke 
 
 ## Description 🎉
+![diagram](./docs/appLook.jpg)
 Ever host a house party or playing music in a fun car trip with some of your buddies? This web application transforms how music is managed at social gatherings. No more awkward moments of asking for the host's phone to play your favorite songs! With this app, everyone at the party can join a shared online room, connect their Spotify account, and contribute to the playlist in real-time. 
 
 Design Documentation:

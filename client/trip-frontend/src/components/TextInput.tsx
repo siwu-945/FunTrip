@@ -1,24 +1,36 @@
-import React from "react";
+import React, { useState } from "react";
+import { TextInputProps } from '../types/index';
 
-const TextInput: React.FC = () => {
+const TextInput: React.FC<TextInputProps> = ({ onSendMessage }) => {
+    const [newMessage, setNewMessage] = useState('');
+
+    const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (newMessage) {
+            onSendMessage(newMessage);
+            setNewMessage('');
+        }
+    };
+
     return (
-        <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-4 flex items-center">
+        <form onSubmit={handleSendMessage} className="bg-white border border-gray-300 rounded-lg shadow-sm p-4 flex items-center">
             {/* Microphone Icon */}
             <i className="fas fa-microphone text-gray-400 mr-3"></i>
 
             {/* Input Field */}
             <input
                 type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Message to the Room"
                 className="flex-1 outline-none text-gray-700"
             />
-
+            
             {/* Action Icons */}
-            <div className="flex items-center">
-                <i className="fas fa-paper-plane text-gray-400 mx-2"></i>
-                <i className="fas fa-cog text-gray-400"></i>
-            </div>
-        </div>
+            <button type="submit" className="mt-1 bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                Send
+            </button>
+        </form>
     );
 };
 
