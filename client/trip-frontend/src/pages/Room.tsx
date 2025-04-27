@@ -7,22 +7,30 @@ import { SongObj, Message, FormattedMessage, RoomComponentProps } from '../types
 import { useState, useEffect } from "react"
 
 export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
+    const [playStatus, setPlayStatus] = useState(false)
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
 
     useEffect(() => {
-        console.log("a new user joined")
         if(socket){
+            // Playlist management
             socket.on("updateSongStream", (songStream : SongObj[]) => {
                 setCurrentQueue((prev) => [...prev, ...songStream])
             })
             socket.on("getCurrentSongStream", (songStream : SongObj[]) => {
                 setCurrentQueue(songStream)
             })
+
+            // Audio Player Management
+            socket.on("updatePlayingStatus", (audioStatus : boolean) => {
+                setPlayStatus(audioStatus)
+            })
+
             // Listen for incoming messages
             socket.on('receiveMessage', (message: Message) => {
                 setMessages(prev => [...prev, message]);
             });
+
         }
         return() =>{
             if(socket){
@@ -100,7 +108,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 <div className="p-6">
                     {/* Room name and Current Song Queue */}
                     <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
-                    <AudioPlayer songs={currentQueue} />
+                    <AudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} />
                     <CurrentSongQueue songs={currentQueue} />
                 </div>
 

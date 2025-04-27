@@ -120,7 +120,6 @@ export default function initSockets(httpServer: HTTPServer) {
         })
 
         socket.on("addSongToStream", ({selectedTracks, roomId} : {selectedTracks: SpotifyApi.PlaylistTrackObject[], roomId : string}) => {
-            console.log("a new song is added")
             if (rooms[roomId]) {
                 addSongToStream(roomId, selectedTracks)
             }
@@ -128,6 +127,11 @@ export default function initSockets(httpServer: HTTPServer) {
                 console.error("No such room exist")
             }
         })
+
+        socket.on("pauseAndPlayEvent", ({roomId, isPaused} : {roomId : string, isPaused : boolean}) => {
+            socket.to(roomId).emit('updatePlayingStatus', isPaused);
+        })
+
         socket.on('sendMessage', ({ roomId, message }) => {
             // broadcast the message to all clients in the room including the sender
             io.to(roomId).emit('receiveMessage', message);

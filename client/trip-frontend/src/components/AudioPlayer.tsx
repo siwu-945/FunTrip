@@ -1,11 +1,11 @@
 import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
 import { FaStepForward } from "react-icons/fa";
-import { DownloadResponse, SongObj } from "../types";
+import { AudioPlayerProps, DownloadResponse, SongObj } from "../types";
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
-const AudioPlayer: React.FC<{ songs: SongObj[] }> = ({ songs }) => {
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, roomId}) => {
     const [currentAudioUrl, setCurrentAudioUrl] = useState<string>('');
     const [currentIndex, setCurrentIndex] = useState(0);
     const [populatedSongInfo, setPopulatedSongInfo] = useState<SongObj[]>([]);
@@ -34,6 +34,21 @@ const AudioPlayer: React.FC<{ songs: SongObj[] }> = ({ songs }) => {
         const firstAudio = await retrieveAudio(0);
         setCurrentAudioUrl(firstAudio);
     }
+    const handleNext = async () => {
+        if (currentIndex + 1 >= songs.length){
+            console.log("index out of range, song len: " + songs.length)
+            return;
+        }
+        const nextSongIdx = currentIndex + 1;
+        let audioUrl = populatedSongInfo[nextSongIdx]?.audioUrl;
+        if(!audioUrl){
+            console.log("Audio url is empty, retrying...");
+            audioUrl = await retrieveAudio(nextSongIdx);   
+        }
+        setCurrentAudioUrl(audioUrl);
+        setCurrentIndex(nextSongIdx);
+        audioRef.current.currentTime = 0;  
+    };
 
     // Play the first song
     useEffect(() => {
@@ -63,27 +78,25 @@ const AudioPlayer: React.FC<{ songs: SongObj[] }> = ({ songs }) => {
         fetchAudioUrls();
     }, [songs]);
 
-    const handleNext = async () => {
-        if (currentIndex + 1 >= songs.length){
-            console.log("index out of range, song len: " + songs.length)
-            return;
-        }
-        const nextSongIdx = currentIndex + 1;
-        let audioUrl = populatedSongInfo[nextSongIdx]?.audioUrl;
-        if(!audioUrl){
-            console.log("Audio url is empty, retrying...");
-            audioUrl = await retrieveAudio(nextSongIdx);   
-        }
-        setCurrentAudioUrl(audioUrl);
-        setCurrentIndex(nextSongIdx);
-        audioRef.current.currentTime = 0;  
-    };
+    // detect pausing
+    useEffect(()=> {
+        const audio = audioRef.current;
+        if (!audio) return;
 
-    const togglePlay = () => {
-        console.log("Current song index:" + currentIndex);
-        console.log("Current song playing: " + populatedSongInfo[currentIndex]?.spotifyData.track.name);
-        // console.log("Url: " + populatedSongInfo[currentIndex]?.audioUrl);
-        // console.log("current audio: " + currentAudioUrl);
+        if(audioPaused){
+            audio.pause();
+        }else{
+            audio.play();
+        }
+    }, [audioPaused])
+
+    const pauseAndPlay = () => {
+        const audio = audioRef.current;
+        if (!audio) return;
+        
+        const isPaused = audio.paused;
+
+        socket.emit("pauseAndPlayEvent", {roomId, isPaused})
     }
 
     return (
@@ -114,7 +127,8 @@ const AudioPlayer: React.FC<{ songs: SongObj[] }> = ({ songs }) => {
                         ref={audioRef}
                         src={currentAudioUrl}
                         onEnded={handleNext}
-                        onPlay={togglePlay}
+                        onPlay={pauseAndPlay}
+                        onPause={pauseAndPlay}
                         controls autoPlay
                         className="w-full h-8"
                     />
