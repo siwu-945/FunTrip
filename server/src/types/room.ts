@@ -1,3 +1,4 @@
+import { SongObj } from '.';
 import { User } from './user'
 
 export class RoomInfo{
@@ -5,14 +6,19 @@ export class RoomInfo{
     hostID: string;
     requiresPassword : boolean;
     private users: Map<string, User>;
+    private songStream: SongObj[];
 
     public constructor(roomID:string){
         this.roomID = roomID;
         this.hostID = "";
         this.users = new Map<string, User>;
         this.requiresPassword = false;
+        this.songStream = [];
     }
 
+    /**
+     * User management
+     */
     public userExist(username : string) : boolean {
         return this.users.has(username);
     }
@@ -27,6 +33,26 @@ export class RoomInfo{
 
     public removeUser(userName : string){
         this.users.delete(userName);
+    }
+
+    /**
+     * Song management
+     */
+
+    public addSongToStream(selectedTracks: SpotifyApi.PlaylistTrackObject[]){
+        const songObjs : SongObj[] = selectedTracks.map((track) => ({
+            spotifyData : track,
+        }));
+        this.songStream.push(...songObjs);
+        return songObjs;
+    }
+
+    public get getSongStream() : SongObj[]{
+        return this.songStream;
+    }
+
+    public removeSongToStream(selectedSong : SpotifyApi.PlaylistTrackObject){
+        // TODO
     }
 
 }

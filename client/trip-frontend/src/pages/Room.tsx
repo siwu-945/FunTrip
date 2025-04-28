@@ -5,29 +5,44 @@ import TextInput from "../components/TextInput"
 import JoinedUsers from "../components/Users/JoinedUsers"
 import { SongObj, Message, FormattedMessage, RoomComponentProps } from '../types/index';
 import { useState, useEffect } from "react"
-import { Socket } from 'socket.io-client';
 
 export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
+    const [playStatus, setPlayStatus] = useState(false)
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
 
     useEffect(() => {
-        // Listen for incoming messages
-        socket.on('receiveMessage', (message: Message) => {
-            setMessages(prev => [...prev, message]);
-        });
+        if(socket){
+            // Playlist management
+            socket.on("updateSongStream", (songStream : SongObj[]) => {
+                setCurrentQueue((prev) => [...prev, ...songStream])
+            })
+            socket.on("getCurrentSongStream", (songStream : SongObj[]) => {
+                setCurrentQueue(songStream)
+            })
 
-        return () => {
-            socket.off('receiveMessage');
-        };
-    }, [socket]);
+            // Audio Player Management
+            socket.on("updatePlayingStatus", (audioStatus : boolean) => {
+                setPlayStatus(audioStatus)
+            })
+
+            // Listen for incoming messages
+            socket.on('receiveMessage', (message: Message) => {
+                setMessages(prev => [...prev, message]);
+            });
+
+        }
+        return() =>{
+            if(socket){
+                socket.off("updateSongStream");
+                socket.off('receiveMessage');
+                socket.off('getCurrentSongStream');
+            }
+        }
+    },[socket]);
 
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
-        const songObjs: SongObj[] = selectedTracks.map((track) => ({
-            spotifyData: track,
-        }));
-
-        setCurrentQueue((prev) => [...prev, ...songObjs]);
+        socket.emit("addSongToStream", {selectedTracks, roomId})
     };
 
     const handleSendMessage = (content: string) => {
@@ -93,7 +108,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 <div className="p-6">
                     {/* Room name and Current Song Queue */}
                     <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
-                    <AudioPlayer songs={currentQueue} />
+                    <AudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} />
                     <CurrentSongQueue songs={currentQueue} />
                 </div>
 

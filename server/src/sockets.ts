@@ -2,6 +2,7 @@ import { Socket, Server } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import { User } from './types/user';
 import { RoomInfo } from './types/room';
+import { SongObj } from './types';
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
@@ -22,6 +23,33 @@ export default function initSockets(httpServer: HTTPServer) {
         return rooms[roomId] != null;
     }
 
+    /**
+     * Audio Player Management
+     */
+
+
+    /**
+     * Playlist management
+     */
+    const getCurrentSongQueue = (roomId : string) => {
+        io.emit("getCurrentSongStream", [...rooms[roomId].getSongStream])
+    }
+
+    const updateCurrentSongQueue = (newSongs : SongObj[]) => {
+        io.emit("updateSongStream", [...newSongs])
+    }
+
+    const addSongToStream = (roomID : string, selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
+        const newSongs = rooms[roomID].addSongToStream(selectedTracks);
+        updateCurrentSongQueue(newSongs)
+    };
+
+    const removeSongFromStream = () => {
+
+    }
+    /**
+     * User Management
+     */
     const createAndJoinRoom = (roomId: string, socket : Socket) => {
         if(!roomExist(roomId)){
             rooms[roomId] = new RoomInfo(roomId);
@@ -65,7 +93,8 @@ export default function initSockets(httpServer: HTTPServer) {
 
             createAndJoinRoom(roomId, socket);
             addUserToRoom(socket.id, roomId, username);
-
+            getCurrentSongQueue(roomId);
+            
             io.to(roomId).emit('joinRoom', roomId);
             io.to(roomId).emit('userJoined', [...rooms[roomId].getUsers.keys()]);
     
@@ -89,6 +118,20 @@ export default function initSockets(httpServer: HTTPServer) {
                 callback([]);
             }
         })
+
+        socket.on("addSongToStream", ({selectedTracks, roomId} : {selectedTracks: SpotifyApi.PlaylistTrackObject[], roomId : string}) => {
+            if (rooms[roomId]) {
+                addSongToStream(roomId, selectedTracks)
+            }
+            else{
+                console.error("No such room exist")
+            }
+        })
+
+        socket.on("pauseAndPlayEvent", ({roomId, isPaused} : {roomId : string, isPaused : boolean}) => {
+            socket.to(roomId).emit('updatePlayingStatus', isPaused);
+        })
+
         socket.on('sendMessage', ({ roomId, message }) => {
             // broadcast the message to all clients in the room including the sender
             io.to(roomId).emit('receiveMessage', message);

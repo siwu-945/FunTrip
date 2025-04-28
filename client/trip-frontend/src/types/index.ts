@@ -46,3 +46,10 @@ export type SongObj = {
 export type DownloadResponse = {
     audiolink: string;
 }
+
+export type AudioPlayerProps = {
+    songs: SongObj[], 
+    audioPaused: boolean,
+    socket: Socket
+    roomId : string
+}
