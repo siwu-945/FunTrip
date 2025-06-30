@@ -242,6 +242,11 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
                         </div>
 
                         {/* Search Results */}
+                        {showSearchResults && searchResults.length === 0 && (
+                            <div className="p-4 text-center text-gray-500 text-sm">
+                                Empty search results? Let's write a new hit together! Try narrowing your search.
+                            </div>
+                        )}
                         {showSearchResults && searchResults.length > 0 && (
                             <div className="mb-4 bg-white rounded-lg shadow-sm border">
                                 <div className="p-3 border-b border-gray-200">
