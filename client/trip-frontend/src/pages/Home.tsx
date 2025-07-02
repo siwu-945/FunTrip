@@ -21,8 +21,7 @@ export const Home = () => {
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const handleJoinRoom = () => {
-
+    const handleJoinRoom = (action: 'create' | 'join') => {
         setCookie("username", userName, {expires: 7, path: "/"});
         setCookie("roomId", roomId, {expires: 7, path: "/"});
 
@@ -31,7 +30,7 @@ export const Home = () => {
             return;
         }
         if (socket) {
-            socket.emit("joinRoom", {roomId, username: userName});
+            socket.emit("joinRoom", {roomId, username: userName, action});
         }
         setUserJoined(true);
     };
@@ -71,6 +70,18 @@ export const Home = () => {
             window.removeEventListener('modalError', handleModalError);
         };
     }, []);
+
+    useEffect(() => {
+        if (!socket) return;
+        const handleRoomError = (data: { message: string }) => {
+            triggerError(data.message);
+            setUserJoined(false);
+        };
+        socket.on('roomError', handleRoomError);
+        return () => {
+            socket.off('roomError', handleRoomError);
+        };
+    }, [socket]);
 
     // useEffect(() => {
     //     if (userJoined && socket) {
