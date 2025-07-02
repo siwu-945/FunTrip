@@ -88,9 +88,19 @@ export default function initSockets(httpServer: HTTPServer) {
     }
     
     io.on('connection', (socket) => {
-    
-        socket.on('joinRoom', ({roomId, username} : {roomId : string; username : string}) => {
-
+        // separate create and join
+        socket.on('joinRoom', ({roomId, username, action}: {roomId: string; username: string; action: 'create' | 'join'}) => {
+            if (action === 'create') {
+                if (roomExist(roomId)) {
+                    socket.emit('roomError', { message: 'Room ID already in use. Please choose another.' });
+                    return;
+                }
+            } else if (action === 'join') {
+                if (!roomExist(roomId)) {
+                    socket.emit('roomError', { message: 'Room does not exist. Please check your Room ID.' });
+                    return;
+                }
+            }
             createAndJoinRoom(roomId, socket);
             addUserToRoom(socket.id, roomId, username);
             getCurrentSongQueue(roomId);
