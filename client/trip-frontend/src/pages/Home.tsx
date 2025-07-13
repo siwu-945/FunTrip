@@ -17,6 +17,8 @@ export const Home = () => {
     const [userName, setUserName] = useState('');
     const [roomId, setRoomId] = useState('');
     const [userJoined, setUserJoined] = useState(false);
+    const [roomMode, setRoomMode] = useState(false);
+
 
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,25 +74,6 @@ export const Home = () => {
         };
     }, []);
 
-    // useEffect(() => {
-    //     if (userJoined && socket) {
-    //         socket.on("userJoined", (updatedUsers: User[]) => {
-    //             setJoinedUsers(updatedUsers);
-    //         });
-    //         socket.on("userLeft", (updatedUsers: User[]) => {
-    //             setJoinedUsers(updatedUsers);
-    //         });
-    //     }
-
-    //     // Cleanup listeners on unmount or if userJoined/socket changes
-    //     return () => {
-    //         if (socket) {
-    //             socket.off("userJoined");
-    //             socket.off("userLeft");
-    //         }
-    //     };
-    // }, [userJoined, socket]);
-
     return (
         <div className="w-screen h-screen">
             {!userJoined ? (
@@ -107,6 +90,7 @@ export const Home = () => {
                         roomId={roomId} 
                         setUserJoined={setUserJoined}
                         currentUser={userName}
+                        partyMode={roomMode}
                     />
             }
             {/* TODO Update Modal for more Error Messages */

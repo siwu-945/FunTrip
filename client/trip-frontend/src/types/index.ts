@@ -36,6 +36,7 @@ export interface RoomComponentProps {
     roomId: string;
     setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
     currentUser: string;
+    partyMode:boolean;
 }
 
 export type SongObj = {
@@ -50,6 +51,7 @@ export type DownloadResponse = {
 export type AudioPlayerProps = {
     songs: SongObj[], 
     audioPaused: boolean,
-    socket: Socket
-    roomId : string
+    socket: Socket,
+    roomId : string,
+    partyMode:boolean;
 }

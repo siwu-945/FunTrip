@@ -89,6 +89,20 @@ const WelcomePage: React.FC<UserInfoProps> = ({username, setUsername, roomId, se
                     >
                         Join
                     </button>
+                    <div className="flex w-full max-w-md gap-4 mt-3">
+                        <button
+                            className="flex-1 px-4 py-3 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 focus:ring focus:ring-gray-200 transition"
+                            onClick={handleJoinRoom}
+                        >
+                            Party Mode
+                        </button>
+                        <button
+                            className="flex-1 px-4 py-3 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 focus:ring focus:ring-gray-200 transition"
+                            onClick={handleJoinRoom}
+                        >
+                            Distance Mode
+                        </button>
+                    </div>
                 </div>
             </main>
 

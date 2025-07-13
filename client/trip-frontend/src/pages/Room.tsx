@@ -6,8 +6,9 @@ import JoinedUsers from "../components/Users/JoinedUsers"
 import { SongObj, Message, FormattedMessage, RoomComponentProps } from '../types/index';
 import { useState, useEffect } from "react"
 
-export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
-    const [playStatus, setPlayStatus] = useState(false)
+export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser, partyMode}) => {
+    const [playStatus, setPlayStatus] = useState(false);
+    const [progressBar, setProgressBar] = useState(0);
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
 
@@ -25,6 +26,19 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             socket.on("updatePlayingStatus", (audioStatus : boolean) => {
                 setPlayStatus(audioStatus)
             })
+
+            // socket.on("currentProgress", ({isPaused, pausedAt, startedAt} : {isPaused : boolean, pausedAt : number, startedAt : number}) => {
+            //     if(isPaused){
+            //         console.log("paused at: ", pausedAt);
+            //         setProgressBar(pausedAt);
+            //     }else{
+            //         const currentTime = Date.now();
+            //         const elapsedTime = currentTime - startedAt;
+            //         console.log("currentTime: ", currentTime, " startedAt: ", startedAt, " elapsedTime: ", elapsedTime);
+            //         const progress = (elapsedTime / (pausedAt - startedAt)) * 100;
+            //         setProgressBar(progress);
+            //     }
+            // })
 
             // Listen for incoming messages
             socket.on('receiveMessage', (message: Message) => {
@@ -108,7 +122,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 <div className="p-6">
                     {/* Room name and Current Song Queue */}
                     <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
-                    <AudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} />
+                    <AudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={partyMode}/>
                     <CurrentSongQueue songs={currentQueue} />
                 </div>
 

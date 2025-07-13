@@ -4,7 +4,12 @@ import { User } from './user'
 export class RoomInfo{
     roomID: string;
     hostID: string;
+
+    isPaused: boolean;
+    pasuedAt : number;
+    startedAt : number;
     requiresPassword : boolean;
+
     private users: Map<string, User>;
     private songStream: SongObj[];
 
@@ -14,6 +19,10 @@ export class RoomInfo{
         this.users = new Map<string, User>;
         this.requiresPassword = false;
         this.songStream = [];
+
+        this.isPaused = false;
+        this.pasuedAt = 0;
+        this.startedAt = 0;
     }
 
     /**
@@ -53,6 +62,14 @@ export class RoomInfo{
 
     public removeSongToStream(selectedSong : SpotifyApi.PlaylistTrackObject){
         // TODO
+    }
+
+    public getCurrentProgress() {
+        return {
+            isPaused : this.isPaused,
+            pasuedAt: this.pasuedAt,
+            startedAt : this.startedAt
+        }
     }
 
 }

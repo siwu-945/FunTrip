@@ -1,3 +1,13 @@
+## App-level time sync (NTP-style)
+[What is NTP](https://engineering.fb.com/2020/03/18/production-engineering/ntp-service/)
+
+>An easy way to think about NTP is to think of the clock in a microwave. A microwave keeps time on-device. If there’s a time shift, like the switch to daylight savings time, the clock needs to be adjusted manually and checked against some source of truth (e.g., another trusted clock).
+>
+>PTP, on the other hand, works more like the clock on a smartphone. When daylight savings happens, or the phone moves to a new time zone, a smartphone’s clock updates its time on its own by cross-referencing the time over a network. In the same way that smartphone clocks can update themselves, PTP allows systems to be synchronized and rely on a single source of truth for timing.
+
+### Why do we need NTP in this project? TODO
+
+
 ## Room Data Structure Design
 
 ### Problem Statement
