@@ -21,7 +21,14 @@ def search_songs(query, max_results=10, sort_by=None):
             
             results = []
             for entry in info['entries']:
-                if entry:
+                if entry:        
+                    thumbnails = entry.get('thumbnails', [])
+                    thumbnail_url = ''
+                    if thumbnails:
+                        first_thumb = thumbnails[0]
+                        if isinstance(first_thumb, dict):
+                            thumbnail_url = first_thumb.get('url', '')
+
                     result = {
                         'id': entry.get('id', ''),
                         'title': entry.get('title', ''),
@@ -30,7 +37,7 @@ def search_songs(query, max_results=10, sort_by=None):
                         'view_count': entry.get('view_count', 0),
                         'upload_date': entry.get('upload_date', ''),
                         'webpage_url': entry.get('webpage_url', ''),
-                        'thumbnail': entry.get('thumbnail', ''),
+                        'thumbnail': thumbnail_url,
                     }
                     results.append(result)
             
