@@ -154,16 +154,29 @@ const SongSearch: React.FC<SongSearchProps> = ({ handleAddToQueue }) => {
                 onClick={() => handleAddSearchResult(result)}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-medium text-gray-900 break-words whitespace-normal">
-                      {result.title}
-                    </p>
-                    <p className="text-xs text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis">
-                      {result.uploader}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {formatDuration(result.duration)}
-                    </p>
+                  <div className="flex-1 min-w-0 flex items-center space-x-2">
+                    {/* Thumbnail */}
+                    {result.thumbnail ? (
+                      <img
+                        src={result.thumbnail}
+                        alt="thumbnail"
+                        className="w-10 h-10 object-cover rounded shadow border"
+                        style={{ minWidth: '2.5rem' }}
+                      />
+                    ) : (
+                      <i className="fas fa-music text-gray-400 text-2xl w-10 h-10 flex items-center justify-center" />
+                    )}
+                    <div>
+                      <p className="text-base font-medium text-gray-900 break-words whitespace-normal">
+                        {result.title}
+                      </p>
+                      <p className="text-xs text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {result.uploader}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {formatDuration(result.duration)}
+                      </p>
+                    </div>
                   </div>
                   <button
                     className="flex-shrink-0 text-blue-500 hover:text-blue-700"
