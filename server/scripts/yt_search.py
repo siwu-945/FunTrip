@@ -30,6 +30,7 @@ def search_songs(query, max_results=10, sort_by=None):
                         'view_count': entry.get('view_count', 0),
                         'upload_date': entry.get('upload_date', ''),
                         'webpage_url': entry.get('webpage_url', ''),
+                        'thumbnail': entry.get('thumbnail', ''),
                     }
                     results.append(result)
             

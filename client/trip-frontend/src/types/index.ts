@@ -61,6 +61,7 @@ export interface SearchResult {
     uploader: string;
     view_count: number;
     webpage_url: string;
+    thumbnail?: string;
 }
 
 export interface SearchResponse {
