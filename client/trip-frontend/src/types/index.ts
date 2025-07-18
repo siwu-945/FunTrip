@@ -53,3 +53,17 @@ export type AudioPlayerProps = {
     socket: Socket
     roomId : string
 }
+
+export interface SearchResult {
+    id: string;
+    title: string;
+    duration: number;
+    uploader: string;
+    view_count: number;
+    webpage_url: string;
+    thumbnail?: string;
+}
+
+export interface SearchResponse {
+    results: SearchResult[];
+}
