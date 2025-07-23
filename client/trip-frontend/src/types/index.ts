@@ -56,6 +56,11 @@ export type AudioPlayerProps = {
     partyMode:boolean;
 }
 
+export type ToggleProps = {
+    isParty: boolean;
+    setIsParty: (val: boolean) => void;
+}
+
 export interface SearchResult {
     id: string;
     title: string;

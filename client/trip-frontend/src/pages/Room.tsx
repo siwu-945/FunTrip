@@ -2,6 +2,7 @@ import AudioPlayer from "../components/AudioPlayer"
 import CurrentSongQueue from "../components/CurrentSongQueue"
 import PlayLists from "../components/PlayLists"
 import TextInput from "../components/TextInput"
+import { ToggleBtn } from "../components/ToggleBtn"
 import JoinedUsers from "../components/Users/JoinedUsers"
 import { SongObj, Message, FormattedMessage, RoomComponentProps } from '../types/index';
 import { useState, useEffect } from "react"
@@ -11,6 +12,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
     const [progressBar, setProgressBar] = useState(0);
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [isParty, setIsParty] = useState(true);
 
     useEffect(() => {
         if(socket){
@@ -121,7 +123,10 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 {/* Main area above the search bar */}
                 <div className="p-6">
                     {/* Room name and Current Song Queue */}
-                    <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
+                   <div className="flex items-center gap-3 ">
+                        <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
+                        <ToggleBtn isParty={isParty} setIsParty={setIsParty}/>
+                    </div>                    
                     <AudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={partyMode}/>
                     <CurrentSongQueue songs={currentQueue} />
                 </div>
