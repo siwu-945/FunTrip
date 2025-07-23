@@ -6,7 +6,7 @@ interface UserInfoProps {
     setUsername: (username: string) => void;
     roomId: string;
     setRoomId: (roomId: string) => void;
-    handleJoinRoom: () => void;
+    handleJoinRoom: (action: 'create' | 'join') => void;
 }
 
 const WelcomePage: React.FC<UserInfoProps> = ({username, setUsername, roomId, setRoomId, handleJoinRoom}) => {
@@ -83,24 +83,18 @@ const WelcomePage: React.FC<UserInfoProps> = ({username, setUsername, roomId, se
                         onChange={(e) => setRoomId(e.target.value)}
                         className="block w-full mb-3 px-4 py-3 text-gray-700 border border-gray-300 rounded-md focus:ring focus:ring-gray-200 focus:border-gray-500"
                     />
-                    <button
-                        className="w-full max-w-md px-4 py-3 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 focus:ring focus:ring-gray-200 transition"
-                        onClick={handleJoinRoom}
-                    >
-                        Join
-                    </button>
-                    <div className="flex w-full max-w-md gap-4 mt-3">
+                    <div className="flex gap-2">
                         <button
-                            className="flex-1 px-4 py-3 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 focus:ring focus:ring-gray-200 transition"
-                            onClick={handleJoinRoom}
+                            className="w-1/2 max-w-md px-4 py-3 text-white bg-blue-500 border border-blue-500 rounded-md hover:bg-blue-600 focus:ring focus:ring-blue-200 transition"
+                            onClick={() => handleJoinRoom('create')}
                         >
-                            Party Mode
+                            Create Room
                         </button>
                         <button
-                            className="flex-1 px-4 py-3 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 focus:ring focus:ring-gray-200 transition"
-                            onClick={handleJoinRoom}
+                            className="w-1/2 max-w-md px-4 py-3 text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 focus:ring focus:ring-gray-200 transition"
+                            onClick={() => handleJoinRoom('join')}
                         >
-                            Distance Mode
+                            Join Room
                         </button>
                     </div>
                 </div>

@@ -4,9 +4,12 @@ import {useSearchParams} from "react-router-dom";
 import SpotifyWebApi from "spotify-web-api-node";
 import {SpotifyAuthCode} from "../spotify/SpotifyAuthCode.ts";
 import { useAuth } from "../spotify/SpotifyUseAuth.ts";
-import { PlaylistProps } from "../types/index.ts";
+import { PlaylistProps, SearchResult, SearchResponse } from "../types/index.ts";
+import axios from "axios";
+import SongSearch from "./SongSearch";
 
 const spotifyApi = new SpotifyWebApi();
+const serverURL = import.meta.env.VITE_SERVER_URL;
 
 const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     const { authCode, accessToken } = useAuth();
@@ -17,7 +20,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     const [songItems, setSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectedSongItems, setSelectedSongItems] = useState<SpotifyApi.PlaylistTrackObject[]>([]);
     const [selectAll, setSelectAll] = useState(false);
-
+    
     // get the account info from the access token
     useEffect(() => {
         if (!accessToken) return;
@@ -107,11 +110,20 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
         return selectedSongItems.some((item) => item.track?.name === songName);
     }
 
+    const formatDuration = (seconds: number): string => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
     return (
         <aside className="w-64 h-screen bg-gray-50 p-4 border-r flex flex-col">
             {authCode ? (
                 <>
                     <div>
+                        {/* Song Search Component */}
+                        <SongSearch handleAddToQueue={handleAddToQueue} />
+                        {/* End Song Search Component */}
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">
                                 <span className="font-semibold text-2xl text-gray-700">Your Songs</span>
@@ -127,7 +139,6 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
                                     title="Add"></i>
                             </div>
                         </div>
-
                         {showDropdown && (
                             <div className="p-4">
                                 <label
@@ -184,7 +195,6 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
                             ))}
                         </ul>
                     </nav>
-
                     {showDropdown && (
                         <div className="p-4">
                             <button
