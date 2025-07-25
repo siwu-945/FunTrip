@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import initSockets from './sockets';
 import { spawn } from 'child_process';
 import path from 'path'
+import { rooms } from './sockets';
 
 const app = express();
 
@@ -86,6 +87,26 @@ app.post('/search-songs', (req, res): void => {
             });
         }
     });
+});
+
+app.get('/room/:roomId/isHost', (req, res) : void => {
+    const roomId = req.params.roomId;
+    if (!roomId || !rooms[roomId]) {
+        res.status(404).json({ error: 'Room not found' });
+    }
+    const hostId = rooms[roomId].hostID;
+    // console.log("User Id: ", req.query.userName, " Host Id: ", hostId);
+    res.json({ "isHost" : hostId === req.query.userName });
+});
+
+app.get('/room/getHost', (req, res) : void => {
+    const roomId = req.query.roomId as string;
+
+    if (!roomId || !rooms[roomId]) {
+        res.status(404).json({ error: 'Room not found' });
+    }
+    // console.log("User Id: ", req.query.userName, " Host Id: ", hostId);
+    res.json({ "hostId" : rooms[roomId].hostID });
 });
 
 const PORT = process.env.PORT || 3001;

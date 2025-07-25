@@ -23,8 +23,9 @@ export interface Song {
 }
 
 export interface User {
-    id: string;
+    socketId: string;
     username: string;
+    isHost: boolean;
 }
 
 export interface PlaylistProps {
@@ -36,7 +37,6 @@ export interface RoomComponentProps {
     roomId: string;
     setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
     currentUser: string;
-    partyMode:boolean;
 }
 
 export type SongObj = {

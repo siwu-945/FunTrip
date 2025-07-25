@@ -1,11 +1,11 @@
 import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
 import { FaStepForward } from "react-icons/fa";
-import { AudioPlayerProps, DownloadResponse, SongObj } from "../types";
+import { AudioPlayerProps, DownloadResponse, SongObj } from "../../types";
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, roomId, partyMode}) => {
+const MainAudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, roomId, partyMode}) => {
     const [currentAudioUrl, setCurrentAudioUrl] = useState<string>('');
     const [currentIndex, setCurrentIndex] = useState(0);
     const [progressTime, setProgressTime] = useState(0);
@@ -166,4 +166,4 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, r
     );
 };
 
-export default AudioPlayer;
+export default MainAudioPlayer;

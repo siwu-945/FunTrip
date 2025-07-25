@@ -5,10 +5,9 @@ import { RoomInfo } from './types/room';
 import { SongObj } from './types';
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+export const rooms: Record<string, RoomInfo> = {};
 
 export default function initSockets(httpServer: HTTPServer) {
-    const rooms: Record<string, RoomInfo> = {};
-
     const io = new Server(httpServer, {
         cors: {
             origin: CLIENT_URL,
@@ -74,8 +73,12 @@ export default function initSockets(httpServer: HTTPServer) {
         }
 
         const newUser = new User(socketId, username)
+        if (!room.hostID){
+            newUser.isHost = true;
+            room.hostID = username;
+        }
         room.addUserToRoom(newUser)
-        // userList.set(socketId, username);
+        console.log(room)
     }
 
     const promptPassword = () => {

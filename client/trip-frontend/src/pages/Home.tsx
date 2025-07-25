@@ -17,7 +17,6 @@ export const Home = () => {
     const [userName, setUserName] = useState('');
     const [roomId, setRoomId] = useState('');
     const [userJoined, setUserJoined] = useState(false);
-    const [roomMode, setRoomMode] = useState(false);
 
 
     const [error, setError] = useState<string | null>(null);
@@ -120,7 +119,6 @@ export const Home = () => {
                         roomId={roomId} 
                         setUserJoined={setUserJoined}
                         currentUser={userName}
-                        partyMode={roomMode}
                     />
             }
             {/* TODO Update Modal for more Error Messages */
