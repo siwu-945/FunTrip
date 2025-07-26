@@ -18,6 +18,7 @@ export const Home = () => {
     const [roomId, setRoomId] = useState('');
     const [userJoined, setUserJoined] = useState(false);
 
+
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 

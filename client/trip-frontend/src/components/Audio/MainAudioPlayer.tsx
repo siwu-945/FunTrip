@@ -1,17 +1,19 @@
 import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
 import { FaStepForward } from "react-icons/fa";
-import { AudioPlayerProps, DownloadResponse, SongObj } from "../types";
+import { AudioPlayerProps, DownloadResponse, SongObj } from "../../types";
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, roomId}) => {
+const MainAudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, roomId, partyMode}) => {
     const [currentAudioUrl, setCurrentAudioUrl] = useState<string>('');
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [progressTime, setProgressTime] = useState(0);
+
     const [populatedSongInfo, setPopulatedSongInfo] = useState<SongObj[]>([]);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-
+    // TODO: retrival should be done in the backend
     const retrieveAudio = async (songIndex) => {
         try {
             const downloadedSong = await axios.post<DownloadResponse>(`${serverURL}/download-song`, { 'song': songs[songIndex]?.spotifyData.track?.name })
@@ -26,13 +28,34 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, r
         }
 
     };
+
+    const trackSongStartTime = () => {
+
+    };
+
+    const updateSongIndex = () => {
+
+    };
+
+    const updateSongProgressTime = () => {
+
+    };
+
     const handleFirstSong = async() => {
         // make sure we are not overriding the first playing song when new songs are added
         if(audioRef.current !== null && !audioRef.current.paused){
             return;
         }
-        const firstAudio = await retrieveAudio(0);
+
+        if(!partyMode){
+            updateSongIndex();
+            updateSongProgressTime();
+        }
+
+        const firstAudio = await retrieveAudio(currentIndex);
         setCurrentAudioUrl(firstAudio);
+        audioRef.current.currentTime = progressTime
+        trackSongStartTime();
     }
     const handleNext = async () => {
         if (currentIndex + 1 >= songs.length){
@@ -41,12 +64,15 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, r
         }
         const nextSongIdx = currentIndex + 1;
         let audioUrl = populatedSongInfo[nextSongIdx]?.audioUrl;
+
+        //TODO: add a retry or better info mechnisim
         if(!audioUrl){
             console.log("Audio url is empty, retrying...");
             audioUrl = await retrieveAudio(nextSongIdx);   
         }
         setCurrentAudioUrl(audioUrl);
         setCurrentIndex(nextSongIdx);
+        trackSongStartTime();
         audioRef.current.currentTime = 0;  
     };
 
@@ -95,8 +121,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, r
         if (!audio) return;
         
         const isPaused = audio.paused;
+        const progressTime = audio.currentTime;
 
-        socket.emit("pauseAndPlayEvent", {roomId, isPaused})
+        socket.emit("pauseAndPlayEvent", {roomId, isPaused, progressTime})
     }
 
     return (
@@ -139,4 +166,4 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socket, r
     );
 };
 
-export default AudioPlayer;
+export default MainAudioPlayer;

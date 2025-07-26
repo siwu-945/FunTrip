@@ -23,8 +23,9 @@ export interface Song {
 }
 
 export interface User {
-    id: string;
+    socketId: string;
     username: string;
+    isHost: boolean;
 }
 
 export interface PlaylistProps {
@@ -50,8 +51,14 @@ export type DownloadResponse = {
 export type AudioPlayerProps = {
     songs: SongObj[], 
     audioPaused: boolean,
-    socket: Socket
-    roomId : string
+    socket: Socket,
+    roomId : string,
+    partyMode:boolean;
+}
+
+export type ToggleProps = {
+    isParty: boolean;
+    setIsParty: (val: boolean) => void;
 }
 
 export interface SearchResult {

@@ -1,15 +1,23 @@
-import AudioPlayer from "../components/AudioPlayer"
+import { GuestAudioPlayer } from "../components/Audio/GuestAudioPlayer"
+import MainAudioPlayer from "../components/Audio/MainAudioPlayer"
 import CurrentSongQueue from "../components/CurrentSongQueue"
 import PlayLists from "../components/PlayLists"
 import TextInput from "../components/TextInput"
+import { ToggleBtn } from "../components/ToggleBtn"
 import JoinedUsers from "../components/Users/JoinedUsers"
 import { SongObj, Message, FormattedMessage, RoomComponentProps } from '../types/index';
 import { useState, useEffect } from "react"
+import axios from "axios";
 
-export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
-    const [playStatus, setPlayStatus] = useState(false)
+const serverURL = import.meta.env.VITE_SERVER_URL;
+
+export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser}) => {
+    const [playStatus, setPlayStatus] = useState(false);
+    const [progressBar, setProgressBar] = useState(0);
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [isParty, setIsParty] = useState(true);
+    const [isHost, setIsHost] = useState<boolean>(true);
 
     useEffect(() => {
         if(socket){
@@ -26,6 +34,19 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 setPlayStatus(audioStatus)
             })
 
+            // socket.on("currentProgress", ({isPaused, pausedAt, startedAt} : {isPaused : boolean, pausedAt : number, startedAt : number}) => {
+            //     if(isPaused){
+            //         console.log("paused at: ", pausedAt);
+            //         setProgressBar(pausedAt);
+            //     }else{
+            //         const currentTime = Date.now();
+            //         const elapsedTime = currentTime - startedAt;
+            //         console.log("currentTime: ", currentTime, " startedAt: ", startedAt, " elapsedTime: ", elapsedTime);
+            //         const progress = (elapsedTime / (pausedAt - startedAt)) * 100;
+            //         setProgressBar(progress);
+            //     }
+            // })
+
             // Listen for incoming messages
             socket.on('receiveMessage', (message: Message) => {
                 setMessages(prev => [...prev, message]);
@@ -40,6 +61,24 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             }
         }
     },[socket]);
+
+    useEffect(() => {
+        async function checkHostStatus() {
+            try {
+                const response = await axios.get<{ isHost: boolean }>(`${serverURL}/room/${roomId}/isHost`, {
+                    params: {
+                        roomId: roomId,
+                        userName: currentUser
+                    }
+                });
+                setIsHost(response.data.isHost);
+            } catch (error) {
+                console.error("Error checking host status:", error);
+                setIsHost(false); // fallback
+            }
+        }
+    checkHostStatus();
+}, [roomId, currentUser]);
 
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         socket.emit("addSongToStream", {selectedTracks, roomId})
@@ -107,8 +146,17 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 {/* Main area above the search bar */}
                 <div className="p-6">
                     {/* Room name and Current Song Queue */}
-                    <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
-                    <AudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} />
+                   <div className="flex items-center gap-3 ">
+                        <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
+                        
+                        {/* TODO : only host can toggle party mode */}
+                        <ToggleBtn isParty={isParty} setIsParty={setIsParty}/>
+                    </div>
+                    {(isParty && isHost || !isParty) ? 
+                        <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty}/>
+                        : 
+                        <GuestAudioPlayer/>
+                    }                     
                     <CurrentSongQueue songs={currentQueue} />
                 </div>
 

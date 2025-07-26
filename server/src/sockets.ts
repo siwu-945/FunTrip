@@ -5,10 +5,9 @@ import { RoomInfo } from './types/room';
 import { SongObj } from './types';
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+export const rooms: Record<string, RoomInfo> = {};
 
 export default function initSockets(httpServer: HTTPServer) {
-    const rooms: Record<string, RoomInfo> = {};
-
     const io = new Server(httpServer, {
         cors: {
             origin: CLIENT_URL,
@@ -31,8 +30,12 @@ export default function initSockets(httpServer: HTTPServer) {
     /**
      * Playlist management
      */
-    const getCurrentSongQueue = (roomId : string) => {
-        io.emit("getCurrentSongStream", [...rooms[roomId].getSongStream])
+    const getCurrentSongsInfo = (roomId : string) => {
+        // return current song queue of the room
+        io.to(roomId).emit("getCurrentSongStream", [...rooms[roomId].getSongStream])
+
+        // return currnet song playing time
+        io.to(roomId).emit("currentProgress", rooms[roomId].getCurrentProgress);
     }
 
     const updateCurrentSongQueue = (newSongs : SongObj[]) => {
@@ -70,8 +73,12 @@ export default function initSockets(httpServer: HTTPServer) {
         }
 
         const newUser = new User(socketId, username)
+        if (!room.hostID){
+            newUser.isHost = true;
+            room.hostID = username;
+        }
         room.addUserToRoom(newUser)
-        // userList.set(socketId, username);
+        console.log(room)
     }
 
     const promptPassword = () => {
@@ -103,7 +110,7 @@ export default function initSockets(httpServer: HTTPServer) {
             }
             createAndJoinRoom(roomId, socket);
             addUserToRoom(socket.id, roomId, username);
-            getCurrentSongQueue(roomId);
+            getCurrentSongsInfo(roomId);
             
             io.to(roomId).emit('joinRoom', roomId);
             io.to(roomId).emit('userJoined', [...rooms[roomId].getUsers.keys()]);
@@ -138,7 +145,23 @@ export default function initSockets(httpServer: HTTPServer) {
             }
         })
 
-        socket.on("pauseAndPlayEvent", ({roomId, isPaused} : {roomId : string, isPaused : boolean}) => {
+        socket.on("pauseAndPlayEvent", ({roomId, isPaused, progressTime} : {roomId : string, isPaused : boolean, progressTime : number}) => {
+            if(isPaused == null || !rooms[roomId]) return;
+
+            console.log("progressTime: ", progressTime, " isPaused: ", isPaused);
+            rooms[roomId].isPaused = isPaused;
+
+            if(isPaused){
+                rooms[roomId].pasuedAt = Date.now() - rooms[roomId].startedAt;
+            }else{
+                rooms[roomId].startedAt = Date.now() - rooms[roomId].pasuedAt;
+                rooms[roomId].pasuedAt = 0;
+            }
+            socket.to(roomId).emit("currentProgress", {
+                isPaused: rooms[roomId].isPaused,
+                pausedAt: rooms[roomId].pasuedAt,
+                startedAt: rooms[roomId].startedAt
+            });
             socket.to(roomId).emit('updatePlayingStatus', isPaused);
         })
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Socket } from 'socket.io-client';
-import { User } from '../../types/index';
 import { getCookie, removeCookie } from "../../tools/Cookies";
-
+const serverURL = import.meta.env.VITE_SERVER_URL;
+import axios from "axios";
 interface FormattedMessage {
     type: 'date' | 'message';
     content: string;
@@ -19,7 +19,7 @@ interface JoinedUsersProps {
 const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined, currentUser, messages}) => {
 
     const [joinedUser, setJoinedUsers] = useState<string[]>([]);
-
+    const [hostName, setHostName] = useState<string>("");
     /** 
      * Why cookies are used? 
     Retain user session saved in cookies
@@ -54,6 +54,22 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
         };
     }, [socket]);
 
+    useEffect(() => {
+        async function getHostId() {
+            try {
+                const response = await axios.get<{ hostId: string }>(`${serverURL}/room/getHost`, {
+                    params: {
+                        roomId: roomName,
+                        userName: currentUser
+                    }
+                });
+                setHostName(response.data.hostId);
+            } catch (error) {
+                console.error("Error checking host status:", error);
+            }
+        }
+        getHostId();
+    }, );
     const handleUserLeave = () => {
         // cleaning up auth code in the URL
         window.history.pushState({}, "", "/");
@@ -92,15 +108,18 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
                 <nav>
                     <ul>
                         {joinedUser.map((username, idx) => (
-                            <li 
-                                key={idx} 
-                                className={`py-2 px-4 text-sm hover:bg-gray-200 rounded ${
-                                    username === currentUser ? "bg-orange-100 text-orange-500 font-medium" : "text-gray-700"
-                                }`}
-                            >
-                                {username}
-                            </li>
-                        ))}
+                                    <li 
+                                        key={idx} 
+                                        className={`py-2 px-4 text-sm hover:bg-gray-200 rounded ${
+                                            username === currentUser ? "bg-orange-100 text-orange-500 font-medium" : "text-gray-700"
+                                        }`}
+                                    >
+                                        {username}
+                                        {username === hostName && (
+                                            <span className="ml-2 text-yellow-500" title="Host">★</span>
+                                        )}
+                                    </li>
+                                ))}
                     </ul>
                 </nav>
             </div>
