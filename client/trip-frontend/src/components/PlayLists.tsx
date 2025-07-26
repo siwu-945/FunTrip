@@ -69,7 +69,6 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
     };
 
     const handleAddSongs = () => {
-        console.log(selectedSongItems.forEach((x) => console.log(x.track.name)))
         handleAddToQueue(selectedSongItems);
         setSelectedSongItems([]);
     };
@@ -118,12 +117,10 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
 
     return (
         <aside className="w-64 h-screen bg-gray-50 p-4 border-r flex flex-col">
+            <SongSearch handleAddToQueue={handleAddToQueue} />
             {authCode ? (
                 <>
                     <div>
-                        {/* Song Search Component */}
-                        <SongSearch handleAddToQueue={handleAddToQueue} />
-                        {/* End Song Search Component */}
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">
                                 <span className="font-semibold text-2xl text-gray-700">Your Songs</span>
