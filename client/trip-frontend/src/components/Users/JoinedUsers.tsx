@@ -27,10 +27,11 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
     
     We also have to rejoin the room, because everytime the web refreshes, it will generate a new socket
     */
+
     useEffect(() => {
         const savedUserName = getCookie("username");
         const savedRoomId = getCookie("roomId");
-
+        // Emit joinRoom event when user refreshes the page
         socket.emit("joinRoom", { roomId: savedRoomId, username: savedUserName });
     }, []);
 
@@ -57,6 +58,7 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
     useEffect(() => {
         async function getHostId() {
             try {
+                // Call the server to get the host id
                 const response = await axios.get<{ hostId: string }>(`${serverURL}/room/getHost`, {
                     params: {
                         roomId: roomName,

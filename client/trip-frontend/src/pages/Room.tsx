@@ -65,6 +65,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
     useEffect(() => {
         async function checkHostStatus() {
             try {
+                // Call the server to check if the user is host
                 const response = await axios.get<{ isHost: boolean }>(`${serverURL}/room/${roomId}/isHost`, {
                     params: {
                         roomId: roomId,

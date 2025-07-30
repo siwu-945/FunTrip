@@ -53,9 +53,10 @@ export default function initSockets(httpServer: HTTPServer) {
     /**
      * User Management
      */
-    const createAndJoinRoom = (roomId: string, socket : Socket) => {
+    const createAndJoinRoom = (roomId: string, socket : Socket, password?: string) => {
         if(!roomExist(roomId)){
-            rooms[roomId] = new RoomInfo(roomId);
+            rooms[roomId] = new RoomInfo(roomId, password);
+            console.log('Room created:', rooms[roomId]);
         }
 
         if(rooms[roomId].requiresPassword){
@@ -96,7 +97,7 @@ export default function initSockets(httpServer: HTTPServer) {
     
     io.on('connection', (socket) => {
         // separate create and join
-        socket.on('joinRoom', ({roomId, username, action}: {roomId: string; username: string; action: 'create' | 'join'}) => {
+        socket.on('joinRoom', ({roomId, username, action, password}: {roomId: string; username: string; action: 'create' | 'join'; password?: string}) => {
             if (action === 'create') {
                 if (roomExist(roomId)) {
                     socket.emit('roomError', { message: 'Room ID already in use. Please choose another.' });
@@ -108,7 +109,7 @@ export default function initSockets(httpServer: HTTPServer) {
                     return;
                 }
             }
-            createAndJoinRoom(roomId, socket);
+            createAndJoinRoom(roomId, socket, password);
             addUserToRoom(socket.id, roomId, username);
             getCurrentSongsInfo(roomId);
             

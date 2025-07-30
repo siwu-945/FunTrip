@@ -9,16 +9,19 @@ export class RoomInfo{
     pasuedAt : number;
     startedAt : number;
     requiresPassword : boolean;
+    password? : string;
 
     private users: Map<string, User>;
     private songStream: SongObj[];
 
-    public constructor(roomID:string){
+    public constructor(roomID:string, password?:string){
         this.roomID = roomID;
         this.hostID = "";
         this.users = new Map<string, User>;
-        this.requiresPassword = false;
+        // converts non-empty string or non-zero numbers to true
+        this.requiresPassword = !!password;
         this.songStream = [];
+        this.password = password || "";
 
         this.isPaused = false;
         this.pasuedAt = 0;

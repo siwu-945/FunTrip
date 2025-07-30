@@ -16,6 +16,7 @@ const MainAudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socke
     // TODO: retrival should be done in the backend
     const retrieveAudio = async (songIndex) => {
         try {
+            // Call the server to download the song
             const downloadedSong = await axios.post<DownloadResponse>(`${serverURL}/download-song`, { 'song': songs[songIndex]?.spotifyData.track?.name })
             return downloadedSong.data.audiolink;
         } catch {
@@ -86,6 +87,7 @@ const MainAudioPlayer: React.FC<AudioPlayerProps> = ({ songs, audioPaused, socke
             const updatedSongs = await Promise.all(
                 songs.map(async (song) => {
                     if (!song.audioUrl) {
+                        // Call the server to download the song
                         const url = await axios
                             .post<DownloadResponse>(`${serverURL}/download-song`, {
                                 song: song.spotifyData.track?.name,
