@@ -10,6 +10,7 @@ interface AuthResponse {
 export const SpotifyAuthCode = async (code: string) => {
 
     const loginUrl = `${serverURL}/api/spotify/login`;
+    // Call the server to login with the authorization code
     const response = await axios.post<AuthResponse>(loginUrl, { code });
     return response.data.accessToken;
 
