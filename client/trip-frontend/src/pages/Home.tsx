@@ -9,6 +9,7 @@ import {getCookie, setCookie} from "../tools/Cookies.ts";
 import { Room } from './Room.tsx';
 import PasswordModal from '../components/Popups/CreatePasswordModal.tsx';
 import JoinPasswordModal from '../components/Popups/JoinPasswordModal.tsx';
+import axios from 'axios';
 
 export const Home = () => {
     const navigate = useNavigate();
@@ -33,7 +34,7 @@ export const Home = () => {
     const [joinPasswordError, setJoinPasswordError] = useState('');
 
     // Emit joinRoom event when user tries to create or join room.
-    const handleJoinRoom = (action: 'create' | 'join') => {
+    const handleJoinRoom = async (action: 'create' | 'join') => {
         // creating a room, pop up password modal
         if (action == 'create') {
             setShowPasswordModal(true);
@@ -47,24 +48,24 @@ export const Home = () => {
             alert("Please enter a valid username and room ID!");
             return;
         }
-        fetch(`${import.meta.env.VITE_SERVER_URL}/room/${roomId}/requiresPassword`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.requiresPassword){
-                    // Show join password modal
-                    setJoinRoomId(roomId);
-                    setJoinUserName(userName);
-                    setShowJoinPasswordModal(true);
-                } else{
-                    if (socket) {
-                        socket.emit("joinRoom", {roomId, username: userName, action});
-                    }
-                    setUserJoined(true);
+        try {
+            const response = await axios.get<{ requiresPassword: boolean }>(
+                `${import.meta.env.VITE_SERVER_URL}/room/${roomId}/requiresPassword`
+            );
+            
+            if (response.data.requiresPassword) {
+                setJoinRoomId(roomId);
+                setJoinUserName(userName);
+                setShowJoinPasswordModal(true);
+            } else {
+                if (socket) {
+                    socket.emit("joinRoom", {roomId, username: userName, action});
                 }
-            })
-            .catch(() => {
-                alert("Failed to check room password status.");
-            });
+                setUserJoined(true);
+            }
+        } catch (error) {
+            alert("Failed to check room password status.");
+        }
     };
     // handle user password preference
     const handlePasswordChoice = (wantsPassword: boolean) => {
@@ -205,18 +206,23 @@ export const Home = () => {
                 }}
                 password={joinPassword}
                 setPassword={setJoinPassword}
-                onSubmit={() => {
+                onSubmit={async () => {
                     // Validate password with backend
-                    fetch(`${import.meta.env.VITE_SERVER_URL}/room/${joinRoomId}/validatePassword`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ password: joinPassword })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.valid) {
+                    try {
+                        const response = await axios.post<{ valid: boolean }>(
+                            `${import.meta.env.VITE_SERVER_URL}/room/${joinRoomId}/validatePassword`,
+                            { password: joinPassword },
+                            { headers: { 'Content-Type': 'application/json' } }
+                        );
+            
+                        if (response.data.valid) {
                             if (socket) {
-                                socket.emit("joinRoom", { roomId: joinRoomId, username: joinUserName, action: 'join', password: joinPassword });
+                                socket.emit("joinRoom", { 
+                                    roomId: joinRoomId, 
+                                    username: joinUserName, 
+                                    action: 'join', 
+                                    password: joinPassword 
+                                });
                             }
                             setUserJoined(true);
                             setShowJoinPasswordModal(false);
@@ -225,10 +231,9 @@ export const Home = () => {
                         } else {
                             setJoinPasswordError('Incorrect password. Please try again.');
                         }
-                    })
-                    .catch(() => {
+                    } catch (error) {
                         setJoinPasswordError('Failed to validate password.');
-                    });
+                    }
                 }}
                 error={joinPasswordError}
             />

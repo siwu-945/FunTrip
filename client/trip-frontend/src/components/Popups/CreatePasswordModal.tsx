@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-
-interface PasswordModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onPasswordChoice: (wantsPassword:boolean) => void;
-    showPasswordInput: boolean;
-    password: string;
-    setPassword: (password: string) => void;
-    onSubmitPassword: (password: string) => void;
-}
+import { PasswordModalProps } from '../../types';
 
 const PasswordModal: React.FC<PasswordModalProps> = ({
     isOpen,
