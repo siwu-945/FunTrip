@@ -16,6 +16,7 @@ export const SpotifyLogin = ({code} : Props ) => {
         try {
             console.log('Testing Spotify API with code:', code);
             const loginUrl = `${serverURL}/api/spotify/login`;
+            // Call the server to login with the authorization code
             await axios.post(loginUrl, {
                 code
             }).then(res => {

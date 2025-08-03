@@ -23,6 +23,7 @@ const SongSearch: React.FC<SongSearchProps> = ({ handleAddToQueue }) => {
     }
     setIsSearching(true);
     try {
+      // Call the server to search for songs
       const response = await axios.post<SearchResponse>(`${serverURL}/search-songs`, {
         query: searchQuery,
         maxResults: 10,

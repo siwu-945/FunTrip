@@ -7,6 +7,8 @@ import WelcomePage from "./WelcomePage.tsx";
 import Footer from "../components/Footer.tsx";
 import {getCookie, setCookie} from "../tools/Cookies.ts";
 import { Room } from './Room.tsx';
+import PasswordModal from '../components/Popups/CreatePasswordModal.tsx';
+import JoinPasswordModal from '../components/Popups/JoinPasswordModal.tsx';
 
 export const Home = () => {
     const navigate = useNavigate();
@@ -18,11 +20,26 @@ export const Home = () => {
     const [roomId, setRoomId] = useState('');
     const [userJoined, setUserJoined] = useState(false);
 
-
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const [showPasswordModal,setShowPasswordModal] = useState(false);
+    const [password,setPassWord] = useState('');
+    const [showPasswordInput, setShowPasswordInput] = useState(false);
+    const [showJoinPasswordModal, setShowJoinPasswordModal] = useState(false);
+    const [joinPassword, setJoinPassword] = useState('');
+    const [joinRoomId, setJoinRoomId] = useState('');
+    const [joinUserName, setJoinUserName] = useState('');
+    const [joinPasswordError, setJoinPasswordError] = useState('');
+
+    // Emit joinRoom event when user tries to create or join room.
     const handleJoinRoom = (action: 'create' | 'join') => {
+        // creating a room, pop up password modal
+        if (action == 'create') {
+            setShowPasswordModal(true);
+            return;
+        }
+        // joining a room
         setCookie("username", userName, {expires: 7, path: "/"});
         setCookie("roomId", roomId, {expires: 7, path: "/"});
 
@@ -30,11 +47,50 @@ export const Home = () => {
             alert("Please enter a valid username and room ID!");
             return;
         }
+        fetch(`${import.meta.env.VITE_SERVER_URL}/room/${roomId}/requiresPassword`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.requiresPassword){
+                    // Show join password modal
+                    setJoinRoomId(roomId);
+                    setJoinUserName(userName);
+                    setShowJoinPasswordModal(true);
+                } else{
+                    if (socket) {
+                        socket.emit("joinRoom", {roomId, username: userName, action});
+                    }
+                    setUserJoined(true);
+                }
+            })
+            .catch(() => {
+                alert("Failed to check room password status.");
+            });
+    };
+    // handle user password preference
+    const handlePasswordChoice = (wantsPassword: boolean) => {
+        if (wantsPassword) {
+            setShowPasswordInput(true);
+        } else {
+            createRoomWithPassword('');
+        }
+    }
+    // create a room with a password
+    const createRoomWithPassword = (roomPassword?: string) => {
+        setCookie("username", userName, {expires: 7, path: "/"});
+        setCookie("roomId", roomId, {expires: 7, path: "/"});
+        if (!userName.trim() || !roomId.trim()) {
+            alert("Please enter a valid username and room ID!");
+            return;
+        }
         if (socket) {
-            socket.emit("joinRoom", {roomId, username: userName, action});
+            socket.emit("joinRoom", {roomId, username: userName, action: 'create', password: roomPassword});
         }
         setUserJoined(true);
-    };
+        setShowPasswordModal(false);
+        setShowPasswordInput(false);
+        setPassWord('');
+    }
+
 
     // TODO use cookie to get and set user info, so when they come back, they are in the same session/room
     useEffect(() => {
@@ -105,6 +161,8 @@ export const Home = () => {
 
     return (
         <div className="w-screen h-screen">
+            {/* If user not joined, show Welcome Page
+            Otherwise, show Room Page */}
             {!userJoined ? (
                     <WelcomePage
                         username={userName}
@@ -112,7 +170,7 @@ export const Home = () => {
                         roomId={roomId}
                         setRoomId={setRoomId}
                         handleJoinRoom={handleJoinRoom}
-                    />) :
+                    />) :(
                     <Room 
                         socket={socket} 
                         // joinedUser={joinedUser} 
@@ -120,12 +178,60 @@ export const Home = () => {
                         setUserJoined={setUserJoined}
                         currentUser={userName}
                     />
-            }
+            )}
             {/* TODO Update Modal for more Error Messages */
             }
             <Modal isOpen={isModalOpen} onClose={closeModal} message={error || "An unknown error occurred."}/>
             <Footer/>
+            <PasswordModal
+                isOpen={showPasswordModal}
+                onClose={() => {
+                    setShowPasswordModal(false);
+                    setShowPasswordInput(false);
+                    setPassWord('');
+                }}
+                onPasswordChoice={handlePasswordChoice}
+                showPasswordInput={showPasswordInput}
+                password={password}
+                setPassword={setPassWord}
+                onSubmitPassword={() => createRoomWithPassword(password)}
+            />
+            <JoinPasswordModal
+                isOpen={showJoinPasswordModal}
+                onClose={() => {
+                    setShowJoinPasswordModal(false);
+                    setJoinPassword('');
+                    setJoinPasswordError('');
+                }}
+                password={joinPassword}
+                setPassword={setJoinPassword}
+                onSubmit={() => {
+                    // Validate password with backend
+                    fetch(`${import.meta.env.VITE_SERVER_URL}/room/${joinRoomId}/validatePassword`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password: joinPassword })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.valid) {
+                            if (socket) {
+                                socket.emit("joinRoom", { roomId: joinRoomId, username: joinUserName, action: 'join', password: joinPassword });
+                            }
+                            setUserJoined(true);
+                            setShowJoinPasswordModal(false);
+                            setJoinPassword('');
+                            setJoinPasswordError('');
+                        } else {
+                            setJoinPasswordError('Incorrect password. Please try again.');
+                        }
+                    })
+                    .catch(() => {
+                        setJoinPasswordError('Failed to validate password.');
+                    });
+                }}
+                error={joinPasswordError}
+            />
         </div>
-    )
-        ;
+    );
 };

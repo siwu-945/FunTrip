@@ -18,10 +18,27 @@ const httpServer = createServer(app);
 
 initSockets(httpServer);
 
+// Health check
 app.get('/', (req, res) => {
     res.send('server is running ' + process.env.FRONTEND_URL);
-})
+});
 
+// Check if the room needs a password
+app.get('/room/:roomId/requiresPassword', (req, res) : void => {
+    const { roomId } = req.params;
+    const room = rooms[roomId];
+    res.json({ requiresPassword: !!room.password });
+});
+
+// Validate room password
+app.post('/room/:roomId/validatePassword', (req, res) : void=> {
+    const { roomId } = req.params;
+    const { password } = req.body;
+    const room = rooms[roomId];
+    res.json({ valid: room.password === password });
+});
+
+// Download song from yt
 app.post('/download-song', (req, res) =>{
     // TODO: we can actually make this serverless on AWS, 
     // and call it from there instead of running a script like this
@@ -42,6 +59,7 @@ app.post('/download-song', (req, res) =>{
     })
 })
 
+// Search for songs on yt
 app.post('/search-songs', (req, res): void => {
     const { query, maxResults = 10, sortBy = undefined } = req.body;
     
@@ -89,6 +107,7 @@ app.post('/search-songs', (req, res): void => {
     });
 });
 
+// Check if user is host
 app.get('/room/:roomId/isHost', (req, res) : void => {
     const roomId = req.params.roomId;
     if (!roomId || !rooms[roomId]) {
@@ -99,6 +118,7 @@ app.get('/room/:roomId/isHost', (req, res) : void => {
     res.json({ "isHost" : hostId === req.query.userName });
 });
 
+// Get host id
 app.get('/room/getHost', (req, res) : void => {
     const roomId = req.query.roomId as string;
 
@@ -109,6 +129,7 @@ app.get('/room/getHost', (req, res) : void => {
     res.json({ "hostId" : rooms[roomId].hostID });
 });
 
+// Start server
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
