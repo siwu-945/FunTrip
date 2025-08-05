@@ -38,13 +38,13 @@ export default function initSockets(httpServer: HTTPServer) {
         io.to(roomId).emit("currentProgress", rooms[roomId].getCurrentProgress);
     }
 
-    const updateCurrentSongQueue = (newSongs : SongObj[]) => {
-        io.emit("updateSongStream", [...newSongs])
+    const updateCurrentSongQueue = (newSongs : SongObj[], roomId : string) => {
+        io.to(roomId).emit("updateSongStream", [...newSongs])
     }
 
     const addSongToStream = (roomID : string, selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         const newSongs = rooms[roomID].addSongToStream(selectedTracks);
-        updateCurrentSongQueue(newSongs)
+        updateCurrentSongQueue(newSongs, roomID)
     };
 
     const removeSongFromStream = () => {
@@ -79,7 +79,6 @@ export default function initSockets(httpServer: HTTPServer) {
             room.hostID = username;
         }
         room.addUserToRoom(newUser)
-        console.log(room)
     }
 
     const promptPassword = () => {
@@ -165,6 +164,15 @@ export default function initSockets(httpServer: HTTPServer) {
             });
             socket.to(roomId).emit('updatePlayingStatus', isPaused);
         })
+
+        socket.on("changeRoomType", ({roomId, isParty} : {roomId : string, isParty : boolean}) => {
+            if (rooms[roomId]) {
+                rooms[roomId].isParty = isParty;
+                io.to(roomId).emit('roomtypeChanged', isParty);
+            } else {
+                console.error("No such room exist");
+            }
+        });
 
         socket.on('sendMessage', ({ roomId, message }) => {
             // broadcast the message to all clients in the room including the sender

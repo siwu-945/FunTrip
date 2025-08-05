@@ -107,6 +107,15 @@ app.post('/search-songs', (req, res): void => {
     });
 });
 
+app.post('/room/:roomId/setParty', (req, res) : void => {
+    const roomId = req.params.roomId;
+    if (!roomId || !rooms[roomId]) {
+        res.status(404).json({ error: 'Room not found' });
+    }
+    rooms[roomId].isParty = req.body.isParty;
+    res.json({ "Success" :  `Room ${roomId} is now ${rooms[roomId].isParty ? 'in party mode' : 'not in party mode'}` });
+});
+
 // Check if user is host
 app.get('/room/:roomId/isHost', (req, res) : void => {
     const roomId = req.params.roomId;
@@ -117,6 +126,16 @@ app.get('/room/:roomId/isHost', (req, res) : void => {
     // console.log("User Id: ", req.query.userName, " Host Id: ", hostId);
     res.json({ "isHost" : hostId === req.query.userName });
 });
+
+app.get('/room/:roomId/isParty', (req, res) : void => {
+    const roomId = req.params.roomId;
+    if (!roomId || !rooms[roomId]) {
+        res.status(404).json({ error: 'Room not found' });
+    }
+    res.json({ "isParty" :  rooms[roomId].isParty });
+});
+
+
 
 // Get host id
 app.get('/room/getHost', (req, res) : void => {

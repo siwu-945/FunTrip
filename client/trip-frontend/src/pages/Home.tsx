@@ -4,7 +4,7 @@ import {useSocket} from '../hooks/useSocket';
 import {useState, useEffect} from "react";
 import Modal from "../components/Popups/Modal.tsx";
 import WelcomePage from "./WelcomePage.tsx";
-import Footer from "../components/Footer.tsx";
+import Footer from "../components/Banners/Footer.tsx";
 import {getCookie, setCookie} from "../tools/Cookies.ts";
 import { Room } from './Room.tsx';
 import PasswordModal from '../components/Popups/CreatePasswordModal.tsx';
