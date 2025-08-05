@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { SpotifyTest } from './spotify/SpotifyTest';
 import {Home} from "./pages/Home.tsx";
-import CookieBanner from './components/CookieBanner';
+import CookieBanner from './components/Banners/CookieBanner.tsx';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 

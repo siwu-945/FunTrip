@@ -6,6 +6,7 @@ export class RoomInfo{
     hostID: string;
 
     isPaused: boolean;
+    isParty: boolean;
     pasuedAt : number;
     startedAt : number;
     requiresPassword : boolean;
@@ -24,6 +25,7 @@ export class RoomInfo{
         this.password = password || "";
 
         this.isPaused = false;
+        this.isParty = true;
         this.pasuedAt = 0;
         this.startedAt = 0;
     }

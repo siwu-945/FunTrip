@@ -23,9 +23,11 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         if(socket){
             // Playlist management
             socket.on("updateSongStream", (songStream : SongObj[]) => {
+                console.log("Song stream updated: ", songStream);
                 setCurrentQueue((prev) => [...prev, ...songStream])
             })
             socket.on("getCurrentSongStream", (songStream : SongObj[]) => {
+                console.log("Current song stream: ", songStream);
                 setCurrentQueue(songStream)
             })
 
@@ -50,6 +52,10 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             // Listen for incoming messages
             socket.on('receiveMessage', (message: Message) => {
                 setMessages(prev => [...prev, message]);
+            });
+
+            socket.on('roomtypeChanged', (isParty : boolean) => {
+                setIsParty(isParty);
             });
 
         }
@@ -80,6 +86,19 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         }
     checkHostStatus();
 }, [roomId, currentUser]);
+
+    // useEffect(() => {
+    //     console.log("current song stream: ", currentQueue);
+    // }, [currentQueue]);
+    useEffect(() => {
+        async function setCurrentRoomStatus() {
+            const response = await axios.post<{isParty : boolean}>(`${serverURL}/room/${roomId}/setParty`, {
+                isParty
+            });
+        }
+        setCurrentRoomStatus();
+        socket.emit("changeRoomType", {roomId, isParty});
+    }, [isParty]);
 
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         socket.emit("addSongToStream", {selectedTracks, roomId})
@@ -150,8 +169,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                    <div className="flex items-center gap-3 ">
                         <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
                         
-                        {/* TODO : only host can toggle party mode */}
-                        <ToggleBtn isParty={isParty} setIsParty={setIsParty}/>
+                        <ToggleBtn isParty={isParty} isHost={isHost} setIsParty={setIsParty}/>
                     </div>
                     {(isParty && isHost || !isParty) ? 
                         <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty}/>

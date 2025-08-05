@@ -58,6 +58,7 @@ export type AudioPlayerProps = {
 
 export type ToggleProps = {
     isParty: boolean;
+    isHost: boolean;
     setIsParty: (val: boolean) => void;
 }
 
