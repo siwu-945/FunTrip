@@ -4,6 +4,11 @@
 ![diagram](./docs/appLook.jpg)
 Ever host a house party or playing music in a fun car trip with some of your buddies? This web application transforms how music is managed at social gatherings. No more awkward moments of asking for the host's phone to play your favorite songs! With this app, everyone at the party can join a shared online room, connect their Spotify account, and contribute to the playlist in real-time. 
 
+Mobile UI:
+<img width="304" height="652" alt="截屏2025-08-06 12 35 09" src="https://github.com/user-attachments/assets/3af79376-5759-4551-9922-32cf1ceb74d5" />
+<img width="309" height="658" alt="截屏2025-08-06 12 35 34" src="https://github.com/user-attachments/assets/f0862c31-ad42-4bde-b55e-e85bf612c568" />
+
+
 Design Documentation:
 [Design Doc](./docs/design-doc.md)
 
