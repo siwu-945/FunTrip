@@ -85,3 +85,12 @@ export interface PasswordModalProps {
     setPassword: (password: string) => void;
     onSubmitPassword: (password: string) => void;
 }
+
+
+export interface RoomHeaderProps {
+  roomId: string;
+  isParty: boolean;
+  isHost: boolean;
+  setIsParty: (isParty: boolean) => void;
+  onExitRoom: () => void;
+}

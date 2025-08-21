@@ -49,7 +49,7 @@ const WelcomePage: React.FC<UserInfoProps> = ({ username, setUsername, roomId, s
 
             <div
                 className={`fixed top-0 right-0 h-full w-72
-    bg-[#fdf6e9] shadow-2xl border-l border-gray-200
+    bg-[#F8F8F6] shadow-2xl border-l border-gray-200
     transform transition-all duration-300 ease-in-out z-50
     ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}
             >
@@ -101,7 +101,7 @@ const WelcomePage: React.FC<UserInfoProps> = ({ username, setUsername, roomId, s
             </div>
 
             {/* Main Content */}
-            <main className={`flex flex-col items-center mt-20 text-center ${isMenuOpen ? " blur-md" : ""}`}>
+            <main className={`flex flex-col items-center mt-20 pb-20 text-center ${isMenuOpen ? " blur-md" : ""}`}>
                 <h1 className="text-2xl font-normal mb-12 text-left">
                     Your Party.<br />Your Music.<br /> Together.
                 </h1>

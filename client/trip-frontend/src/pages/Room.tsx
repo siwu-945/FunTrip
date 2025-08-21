@@ -8,10 +8,14 @@ import JoinedUsers from "../components/Users/JoinedUsers"
 import { SongObj, Message, FormattedMessage, RoomComponentProps } from '../types/index';
 import { useState, useEffect } from "react"
 import axios from "axios";
+import { RoomHeader } from "../components/MobileComponents/RoomHeader"
+import { getCookie, removeCookie } from "../tools/Cookies";
+import FunctionBar from "../components/MobileComponents/FunctionBar"
+
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
-export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser}) => {
+export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
     const [playStatus, setPlayStatus] = useState(false);
     const [progressBar, setProgressBar] = useState(0);
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
@@ -20,19 +24,19 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
     const [isHost, setIsHost] = useState<boolean>(true);
 
     useEffect(() => {
-        if(socket){
+        if (socket) {
             // Playlist management
-            socket.on("updateSongStream", (songStream : SongObj[]) => {
+            socket.on("updateSongStream", (songStream: SongObj[]) => {
                 console.log("Song stream updated: ", songStream);
                 setCurrentQueue((prev) => [...prev, ...songStream])
             })
-            socket.on("getCurrentSongStream", (songStream : SongObj[]) => {
+            socket.on("getCurrentSongStream", (songStream: SongObj[]) => {
                 console.log("Current song stream: ", songStream);
                 setCurrentQueue(songStream)
             })
 
             // Audio Player Management
-            socket.on("updatePlayingStatus", (audioStatus : boolean) => {
+            socket.on("updatePlayingStatus", (audioStatus: boolean) => {
                 setPlayStatus(audioStatus)
             })
 
@@ -54,19 +58,19 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 setMessages(prev => [...prev, message]);
             });
 
-            socket.on('roomtypeChanged', (isParty : boolean) => {
+            socket.on('roomtypeChanged', (isParty: boolean) => {
                 setIsParty(isParty);
             });
 
         }
-        return() =>{
-            if(socket){
+        return () => {
+            if (socket) {
                 socket.off("updateSongStream");
                 socket.off('receiveMessage');
                 socket.off('getCurrentSongStream');
             }
         }
-    },[socket]);
+    }, [socket]);
 
     useEffect(() => {
         async function checkHostStatus() {
@@ -84,24 +88,24 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 setIsHost(false); // fallback
             }
         }
-    checkHostStatus();
-}, [roomId, currentUser]);
+        checkHostStatus();
+    }, [roomId, currentUser]);
 
     // useEffect(() => {
     //     console.log("current song stream: ", currentQueue);
     // }, [currentQueue]);
     useEffect(() => {
         async function setCurrentRoomStatus() {
-            const response = await axios.post<{isParty : boolean}>(`${serverURL}/room/${roomId}/setParty`, {
+            const response = await axios.post<{ isParty: boolean }>(`${serverURL}/room/${roomId}/setParty`, {
                 isParty
             });
         }
         setCurrentRoomStatus();
-        socket.emit("changeRoomType", {roomId, isParty});
+        socket.emit("changeRoomType", { roomId, isParty });
     }, [isParty]);
 
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
-        socket.emit("addSongToStream", {selectedTracks, roomId})
+        socket.emit("addSongToStream", { selectedTracks, roomId })
     };
 
     const handleSendMessage = (content: string) => {
@@ -111,11 +115,23 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 content: content,
                 timestamp: Date.now()
             };
-            
+
             // Only emit the message to server, don't add to local state
             // The message will be added when received through socket
             socket.emit('sendMessage', { roomId, message: messageObj });
         }
+    };
+
+    const handleUserLeave = () => {
+        // cleaning up auth code in the URL
+        window.history.pushState({}, "", "/");
+
+        setUserJoined(false);
+
+        removeCookie("username");
+        removeCookie("roomId");
+
+        socket.emit("exitRoom", roomId);
     };
 
     const formattedMessages = messages.reduce<FormattedMessage[]>((acc, msg, index) => {
@@ -124,10 +140,10 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         const prevDate = prevMessage ? new Date(prevMessage.timestamp) : null;
 
         // Format time as HH:mm
-        const timeStr = messageDate.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
+        const timeStr = messageDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
             minute: '2-digit',
-            hour12: false 
+            hour12: false
         });
 
         // Add date separator if
@@ -153,12 +169,38 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         return acc;
     }, []);
 
+
+    if (true) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <RoomHeader
+                    roomId={roomId}
+                    isParty={isParty}
+                    isHost={isHost}
+                    setIsParty={setIsParty}
+                    onExitRoom={() => {
+                        handleUserLeave();
+                    }}
+                />
+                {(isParty && isHost || !isParty) ?
+                    <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty} />
+                    :
+                    <GuestAudioPlayer />
+                }
+                <FunctionBar handleAddToQueue={handleAddToQueue}/>
+                <CurrentSongQueue songs={currentQueue} />
+                <PlayLists handleAddToQueue={handleAddToQueue} />
+
+                {/* <AudioPlayer songs={[]} currentIndex={1} currentAudioUrl="a" handleNext={null} handlePrevious={null} /> */}
+            </div>
+        )
+    }
     return (
         <div className="w-screen flex h-screen">
-            <JoinedUsers 
-                socket={socket} 
-                roomName={roomId} 
-                setUserJoined={setUserJoined} 
+            <JoinedUsers
+                socket={socket}
+                roomName={roomId}
+                setUserJoined={setUserJoined}
                 currentUser={currentUser}
                 messages={formattedMessages}
             />
@@ -166,16 +208,16 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 {/* Main area above the search bar */}
                 <div className="p-6">
                     {/* Room name and Current Song Queue */}
-                   <div className="flex items-center gap-3 ">
+                    <div className="flex items-center gap-3 ">
                         <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
-                        
-                        <ToggleBtn isParty={isParty} isHost={isHost} setIsParty={setIsParty}/>
+
+                        <ToggleBtn isParty={isParty} isHost={isHost} setIsParty={setIsParty} />
                     </div>
-                    {(isParty && isHost || !isParty) ? 
-                        <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty}/>
-                        : 
-                        <GuestAudioPlayer/>
-                    }                     
+                    {(isParty && isHost || !isParty) ?
+                        <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty} />
+                        :
+                        <GuestAudioPlayer />
+                    }
                     <CurrentSongQueue songs={currentQueue} />
                 </div>
 

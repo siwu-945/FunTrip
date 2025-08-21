@@ -16,7 +16,7 @@ interface JoinedUsersProps {
     currentUser: string;
 }
 
-const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined, currentUser, messages}) => {
+const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined, currentUser, messages }) => {
 
     const [joinedUser, setJoinedUsers] = useState<string[]>([]);
     const [hostName, setHostName] = useState<string>("");
@@ -71,7 +71,7 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
             }
         }
         getHostId();
-    }, );
+    },);
     const handleUserLeave = () => {
         // cleaning up auth code in the URL
         window.history.pushState({}, "", "/");
@@ -80,7 +80,7 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
 
         removeCookie("username");
         removeCookie("roomId");
-        
+
         socket.emit("exitRoom", roomName);
         socket.emit("getUserNames", roomName, (users: string[]) => {
             setJoinedUsers(users);
@@ -110,18 +110,22 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
                 <nav>
                     <ul>
                         {joinedUser.map((username, idx) => (
-                                    <li 
-                                        key={idx} 
-                                        className={`py-2 px-4 text-sm hover:bg-gray-200 rounded ${
-                                            username === currentUser ? "bg-orange-100 text-orange-500 font-medium" : "text-gray-700"
-                                        }`}
+                            <li
+                                key={idx}
+                                className={`py-2 px-4 text-sm hover:bg-gray-200 rounded ${username === currentUser ? "bg-orange-100 text-orange-500 font-medium" : "text-gray-700"}`}>
+                                {username}
+                                {username === hostName && (<span className="ml-2 text-yellow-500" title="Host">★</span>)}
+                                {currentUser === hostName && username !== hostName && (
+                                    <button
+                                        className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                                        title="Make Host"
+                                        onClick={() => socket.emit("setHost", { roomId: roomName, newHost: username })}
                                     >
-                                        {username}
-                                        {username === hostName && (
-                                            <span className="ml-2 text-yellow-500" title="Host">★</span>
-                                        )}
-                                    </li>
-                                ))}
+                                        Make Host
+                                    </button>
+                                )}
+                            </li>
+                        ))}
                     </ul>
                 </nav>
             </div>
