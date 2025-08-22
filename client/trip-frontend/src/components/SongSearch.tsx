@@ -1,19 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { SearchResult, SearchResponse, PlaylistProps } from "../types/index";
-
+import Modal from "./Popups/Modal2.tsx";
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
 interface SongSearchProps {
   handleAddToQueue: (tracks: SpotifyApi.PlaylistTrackObject[]) => void;
 }
 
-const SongSearch: React.FC<SongSearchProps> = ({ handleAddToQueue }) => {
+const SongSearch = ({ handleAddToQueue, isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [sortBy, setSortBy] = useState<string>("date");
+  const [sortBy, setSortBy] = useState("date");
 
   const handleSearch = async (sortOverride?: string) => {
     if (!searchQuery.trim()) {
@@ -43,23 +43,22 @@ const SongSearch: React.FC<SongSearchProps> = ({ handleAddToQueue }) => {
     }
   };
 
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSortChange = (e) => {
     const newSort = e.target.value;
     setSortBy(newSort);
     if (searchQuery.trim()) {
       handleSearch(newSort);
     }
   };
-    // trigger search when enter is pressed
-  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+
+  const handleSearchKeyPress = (e) => {
     if (e.key === "Enter") {
       handleSearch();
     }
   };
 
-  const handleAddSearchResult = (searchResult: SearchResult) => {
-    // Convert search result to a format compatible with SpotifyApi.PlaylistTrackObject
-    const mockSpotifyTrack: SpotifyApi.PlaylistTrackObject = {
+  const handleAddSearchResult = (searchResult) => {
+    const mockSpotifyTrack = {
       added_at: new Date().toISOString(),
       added_by: null,
       is_local: false,
@@ -81,120 +80,174 @@ const SongSearch: React.FC<SongSearchProps> = ({ handleAddToQueue }) => {
         restrictions: null,
         type: 'track',
         uri: searchResult.webpage_url
-      } as any
+      }
     };
     handleAddToQueue([mockSpotifyTrack]);
-    setShowSearchResults(false);
-    setSearchQuery("");
+
+    // Success animation and close
+    const button = document.querySelector(`[data-result-id="${searchResult.id}"]`);
+    if (button) {
+      button.innerHTML = '<i class="fas fa-check text-green-500"></i>';
+      button.classList.add('bg-green-50', 'border-green-200');
+    }
+
+    setTimeout(() => {
+      onClose();
+      setSearchQuery("");
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }, 800);
   };
 
-  const formatDuration = (seconds: number): string => {
+  const formatDuration = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSearchQuery("");
+      setSearchResults([]);
+      setShowSearchResults(false);
+      setIsSearching(false);
+    }
+  }, [isOpen]);
+
   return (
-    <div>
-      {/* Search Bar */}
-      <div className="mb-4">
-        <div className="relative">
+    <Modal isOpen={isOpen} onClose={onClose} title="Search Songs">
+      <div className="space-y-4">
+        {/* Search Bar */}
+        <div className="relative group">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={handleSearchKeyPress}
-            placeholder="Search for songs..."
-            className="w-full p-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+            placeholder="Search for songs, artists, or albums..."
+            className="w-full p-3 pr-12 border-2 border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm placeholder-gray-400 group-hover:border-gray-300"
+            autoFocus
           />
           <button
             onClick={() => handleSearch()}
             disabled={isSearching}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center"
-          >
+className="absolute right-3 top-1/2 transform -translate-y-1/2 
+             w-8 h-8 flex items-center justify-center 
+             bg-white rounded-lg 
+             hover:border-gray-300 hover:bg-gray-50 
+             transition-colors duration-200 disabled:cursor-not-allowed"          >
             {isSearching ? (
-              <i className="fas fa-spinner fa-spin"></i>
+              <i className="fas fa-spinner fa-spin border-t-transparent rounded-full"></i>
+              // <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+
             ) : (
-              <i className="fas fa-search"></i>
+              <i className="fas fa-search text-gray-500"></i>
+              // <i className="fas fa-search text-gray-500"></i>
+
             )}
           </button>
         </div>
-      </div>
-      {/* Sort Dropdown */}
-      <div className="mb-2 flex items-center justify-end">
-        <label htmlFor="sort-dropdown" className="mr-2 text-xs text-gray-600">
-          Sort by:
-        </label>
-        <select
-          id="sort-dropdown"
-          value={sortBy}
-          onChange={handleSortChange}
-          className="p-1 border border-gray-300 rounded text-xs focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="date">Most Recent</option>
-          <option value="views">Most Listened</option>
-          <option value="alphabetic">A-Z</option>
-        </select>
-      </div>
-      {/* Search Results */}
-      {showSearchResults && searchResults.length === 0 && (
-        <div className="p-4 text-center text-gray-500 text-sm">
-          Empty search results? Let's write a new hit together! Try narrowing your search.
-        </div>
-      )}
-      {showSearchResults && searchResults.length > 0 && (
-        <div className="mb-4 bg-white rounded-lg shadow-sm border">
-          <div className="p-3 border-b border-gray-200">
-            <h3 className="text-sm font-medium text-gray-700">Search Results</h3>
+
+        {/* Sort Dropdown */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-500">
+            {showSearchResults && searchResults.length > 0 && `${searchResults.length} results found`}
+          </p>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-600 font-medium">Sort by:</label>
+            <select
+              value={sortBy}
+              onChange={handleSortChange}
+              className="px-3 py-1 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value="date">Most Recent</option>
+              <option value="views">Most Listened</option>
+              <option value="alphabetic">A-Z</option>
+            </select>
           </div>
-          <div className="max-h-48 overflow-y-auto">
-            {searchResults.map((result) => (
+        </div>
+
+        {/* Search Results */}
+        {showSearchResults && searchResults.length === 0 && (
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <i className="fas fa-search text-2xl text-gray-400"></i>
+            </div>
+            <p className="text-gray-500 text-sm font-medium mb-2">No results found</p>
+            <p className="text-gray-400 text-xs">Try adjusting your search terms or check the spelling</p>
+          </div>
+        )}
+
+        {showSearchResults && searchResults.length > 0 && (
+          <div className="space-y-2 animate-fadeIn">
+            {searchResults.map((result, index) => (
               <div
                 key={result.id}
-                className="p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer"
+                className="p-3 border border-gray-200 rounded-xl hover:shadow-md hover:border-blue-200 transition-all duration-200 cursor-pointer group animate-slideInUp"
+                style={{ animationDelay: `${index * 50}ms` }}
                 onClick={() => handleAddSearchResult(result)}
               >
-                <div className="flex items-center space-x-3">
-                  <div className="flex-1 min-w-0 flex items-center space-x-2">
-                    {/* Thumbnail */}
+                <div className="flex items-center gap-3">
+                  {/* Thumbnail */}
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                     {result.thumbnail ? (
                       <img
                         src={result.thumbnail}
                         alt="thumbnail"
-                        className="w-10 h-10 object-cover rounded shadow border"
-                        style={{ minWidth: '2.5rem' }}
+                        className="w-full h-full object-cover"
                       />
                     ) : (
-                      <i className="fas fa-music text-gray-400 text-2xl w-10 h-10 flex items-center justify-center" />
+                      <div className="w-full h-full flex items-center justify-center">
+                        <i className="fas fa-music text-gray-400"></i>
+                      </div>
                     )}
-                    <div>
-                      <p className="text-base font-medium text-gray-900 break-words whitespace-normal">
-                        {result.title}
-                      </p>
-                      <p className="text-xs text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis">
-                        {result.uploader}
-                      </p>
-                      <p className="text-xs text-gray-400">
+                  </div>
+
+                  {/* Song Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors duration-200">
+                      {result.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 truncate mt-1">
+                      {result.uploader}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-gray-400">
                         {formatDuration(result.duration)}
-                      </p>
+                      </span>
                     </div>
                   </div>
+
+                  {/* Add Button */}
                   <button
-                    className="flex-shrink-0 text-blue-500 hover:text-blue-700"
+                    data-result-id={result.id}
+                    className="w-10 h-10 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 group-hover:scale-105"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAddSearchResult(result);
                     }}
                   >
-                    <i className="fas fa-plus text-base"></i>
+                    <i className="fas fa-plus text-gray-500 group-hover:text-blue-500 transition-colors duration-200"></i>
                   </button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* Empty State */}
+        {!showSearchResults && searchQuery === "" && (
+          <div className="p-8 text-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
+              <i className="fas fa-music text-3xl text-blue-500"></i>
+            </div>
+            <p className="text-gray-600 text-sm font-medium mb-2">Discover New Music</p>
+            <p className="text-gray-400 text-xs">Search for your favorite songs and add them to the queue</p>
+          </div>
+        )}
+      </div>
+    </Modal>
   );
 };
 
