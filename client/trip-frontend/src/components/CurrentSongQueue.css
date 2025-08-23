@@ -1,0 +1,17 @@
+.current-song-playing {
+    background: white;
+    position: relative;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.current-song-playing::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(to right, #86efac, #4ade80, #22c55e);
+    border-radius: 0 0 4px 4px;
+}

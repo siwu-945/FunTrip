@@ -22,6 +22,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
     const [messages, setMessages] = useState<Message[]>([]);
     const [isParty, setIsParty] = useState(true);
     const [isHost, setIsHost] = useState<boolean>(true);
+    const [currentSongIndex, setCurrentSongIndex] = useState<number>(0);
 
     useEffect(() => {
         if (socket) {
@@ -183,18 +184,26 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     }}
                 />
                 {(isParty && isHost || !isParty) ?
-                    <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty} />
+                    <MainAudioPlayer 
+                        songs={currentQueue} 
+                        audioPaused={playStatus} 
+                        socket={socket} 
+                        roomId={roomId} 
+                        partyMode={isParty}
+                        onCurrentSongChange={setCurrentSongIndex}
+                    />
                     :
                     <GuestAudioPlayer />
                 }
                 <FunctionBar handleAddToQueue={handleAddToQueue}/>
-                <CurrentSongQueue songs={currentQueue} />
+                <CurrentSongQueue songs={currentQueue} currentSongIndex={currentSongIndex} />
                 <PlayLists handleAddToQueue={handleAddToQueue} />
 
                 {/* <AudioPlayer songs={[]} currentIndex={1} currentAudioUrl="a" handleNext={null} handlePrevious={null} /> */}
             </div>
         )
     }
+    // TODO: separate mobile ui and desktop ui
     return (
         <div className="w-screen flex h-screen">
             <JoinedUsers
@@ -214,11 +223,18 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                         <ToggleBtn isParty={isParty} isHost={isHost} setIsParty={setIsParty} />
                     </div>
                     {(isParty && isHost || !isParty) ?
-                        <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty} />
+                        <MainAudioPlayer 
+                            songs={currentQueue} 
+                            audioPaused={playStatus} 
+                            socket={socket} 
+                            roomId={roomId} 
+                            partyMode={isParty}
+                            onCurrentSongChange={setCurrentSongIndex}
+                        />
                         :
                         <GuestAudioPlayer />
                     }
-                    <CurrentSongQueue songs={currentQueue} />
+                    <CurrentSongQueue songs={currentQueue} currentSongIndex={currentSongIndex} />
                 </div>
 
                 {/* Text Input at the bottom */}

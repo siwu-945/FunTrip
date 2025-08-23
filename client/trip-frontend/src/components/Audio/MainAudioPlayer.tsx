@@ -5,13 +5,15 @@ import { AudioPlayerProps, DownloadResponse, SongObj } from "../../types";
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
-const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
+const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurrentSongChange }) => {
     const [currentAudioUrl, setCurrentAudioUrl] = useState("")
     const [currentIndex, setCurrentIndex] = useState(0);
     const [progressTime, setProgressTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [currentSongIndex, setCurrentSongIndex] = useState<number>(0);
+
 
     const [populatedSongInfo, setPopulatedSongInfo] = useState([]);
     const audioRef = useRef(null);
@@ -64,6 +66,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
     }
 
     const handleNext = async () => {
+        // TODO: circle back to the first song if the current index is the last song
         if (currentIndex + 1 >= songs.length) {
             console.log("index out of range, song len: " + songs.length)
             return;
@@ -221,7 +224,21 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
 
     const getCurrentSong = () => songs[currentIndex];
     const currentSong = getCurrentSong();
+    useEffect(() => {
+        if (songs.length > 0 && currentSongIndex < songs.length) {
+            // Notify parent component about current song change
+            if (onCurrentSongChange) {
+                onCurrentSongChange(currentSongIndex);
+            }
+        }
+    }, [currentSongIndex, songs, onCurrentSongChange]);
 
+    // Notify parent when current index changes
+    useEffect(() => {
+        if (onCurrentSongChange) {
+            onCurrentSongChange(currentIndex);
+        }
+    }, [currentIndex, onCurrentSongChange]);
     return (
         <section className="p-6 bg-[#F8F8F6] relative">
             <div className="flex items-center gap-4">
