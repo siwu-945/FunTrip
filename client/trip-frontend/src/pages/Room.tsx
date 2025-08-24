@@ -109,6 +109,16 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         socket.emit("addSongToStream", { selectedTracks, roomId })
     };
 
+    const handleClearQueue = () => {
+        console.log("Current song stream before clearing:", {
+            songsCount: currentQueue.length,
+            songs: currentQueue.map(s => s.spotifyData.track?.name),
+            currentSongIndex
+        });
+        
+        socket.emit("clearQueue", { roomId, username: currentUser });
+    };
+
     const handleSendMessage = (content: string) => {
         if (content) {
             const messageObj: Message = {
@@ -196,7 +206,12 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     <GuestAudioPlayer />
                 }
                 <FunctionBar handleAddToQueue={handleAddToQueue}/>
-                <CurrentSongQueue songs={currentQueue} currentSongIndex={currentSongIndex} />
+                <CurrentSongQueue 
+                    songs={currentQueue} 
+                    currentSongIndex={currentSongIndex} 
+                    isHost={isHost}
+                    onClearQueue={handleClearQueue}
+                />
                 <PlayLists handleAddToQueue={handleAddToQueue} />
 
                 {/* <AudioPlayer songs={[]} currentIndex={1} currentAudioUrl="a" handleNext={null} handlePrevious={null} /> */}
@@ -234,7 +249,12 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                         :
                         <GuestAudioPlayer />
                     }
-                    <CurrentSongQueue songs={currentQueue} currentSongIndex={currentSongIndex} />
+                    <CurrentSongQueue 
+                        songs={currentQueue} 
+                        currentSongIndex={currentSongIndex} 
+                        isHost={isHost}
+                        onClearQueue={handleClearQueue}
+                    />
                 </div>
 
                 {/* Text Input at the bottom */}

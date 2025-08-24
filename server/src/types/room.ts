@@ -65,6 +65,13 @@ export class RoomInfo{
         return this.songStream;
     }
 
+    public clearQueue() {
+        console.log("🎵 Clearing queue for room:", this.roomID);
+        this.songStream = [];
+        console.log("📊 Songs after clearing:", this.songStream.length);
+        return this.songStream;
+    }
+
     public removeSongToStream(selectedSong : SpotifyApi.PlaylistTrackObject){
         // TODO
     }

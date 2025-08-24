@@ -145,6 +145,31 @@ export default function initSockets(httpServer: HTTPServer) {
             }
         })
 
+        socket.on("clearQueue", ({roomId, username} : {roomId : string, username : string}) => {
+            if (!rooms[roomId]) {
+                console.error("No such room exist");
+                return;
+            }
+            
+            // Check if user is host
+            if (rooms[roomId].hostID !== username) {
+                return;
+            }
+            
+            console.log("🚀 Clear Queue request from host:", username, "for room:", roomId);
+            
+            // Clear the queue
+            const clearedQueue = rooms[roomId].clearQueue();
+            
+            console.log("📊 Current song stream after clearing:", {
+                songsCount: clearedQueue.length,
+                songs: clearedQueue.map(s => s.spotifyData.track?.name)
+            });
+            
+            // Update all clients in the room
+            updateCurrentSongQueue(clearedQueue, roomId);
+        })
+
         socket.on("pauseAndPlayEvent", ({roomId, isPaused, progressTime} : {roomId : string, isPaused : boolean, progressTime : number}) => {
             if(isPaused == null || !rooms[roomId]) return;
 

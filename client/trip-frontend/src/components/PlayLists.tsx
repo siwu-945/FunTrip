@@ -117,7 +117,7 @@ const PlayLists: React.FC<PlaylistProps> = ({handleAddToQueue}) => {
 
     return (
         <aside className="w-64 h-screen bg-gray-50 p-4 border-r flex flex-col">
-            <SongSearch handleAddToQueue={handleAddToQueue} />
+            <SongSearch handleAddToQueue={handleAddToQueue} isOpen={false} onClose={() => {}} />
             {authCode ? (
                 <>
                     <div>
