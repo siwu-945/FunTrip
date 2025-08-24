@@ -15,3 +15,39 @@
     background: linear-gradient(to right, #86efac, #4ade80, #22c55e);
     border-radius: 0 0 4px 4px;
 }
+
+/* Drag and drop styles */
+.sortable-item {
+    transition: all 0.2s ease;
+}
+
+.sortable-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sortable-item:active {
+    cursor: grabbing;
+}
+
+.sortable-item.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Grip handle styles */
+.grip-handle {
+    cursor: grab;
+    color: #9ca3af;
+    transition: color 0.2s ease;
+}
+
+.grip-handle:hover {
+    color: #6b7280;
+}
+
+.grip-handle:active {
+    cursor: grabbing;
+    color: #4b5563;
+}

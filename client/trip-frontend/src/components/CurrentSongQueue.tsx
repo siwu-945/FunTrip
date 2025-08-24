@@ -1,16 +1,106 @@
 import React from 'react';
 import { SongObj } from '../types';
 import './CurrentSongQueue.css';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface CurrentSongQueueProps {
     songs: SongObj[];
     currentSongIndex: number;
     isHost: boolean;
     onClearQueue: () => void;
+    onReorderQueue: (newOrder: number[]) => void;
 }
 
+const SortableSongItem: React.FC<{
+    song: SongObj;
+    index: number;
+    currentSongIndex: number;
+}> = ({ song, index, currentSongIndex }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: index });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <li
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className={`sortable-item text-gray-700 py-1 px-2 rounded shadow-sm transition-all duration-200 cursor-move ${
+                index === currentSongIndex 
+                    ? 'current-song-playing' 
+                    : 'bg-white hover:bg-gray-50'
+            } ${isDragging ? 'dragging' : ''}`}
+        >
+            <div className="flex items-center gap-2">
+                <i className="fas fa-grip-vertical grip-handle text-xs"></i>
+                <span>{index + 1}. {song.spotifyData.track?.name || ""}</span>
+                {index === currentSongIndex && (
+                    <span className="ml-2 text-green-600">
+                        <i className="fas fa-play"></i>
+                    </span>
+                )}
+            </div>
+        </li>
+    );
+};
+
 // TODO update the song names with actual added songs
-const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({ songs, currentSongIndex, isHost, onClearQueue }) => {
+const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({ songs, currentSongIndex, isHost, onClearQueue, onReorderQueue }) => {
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (active.id !== over?.id) {
+            const oldIndex = Number(active.id);
+            const newIndex = Number(over?.id);
+            
+            // Create new order array
+            const newOrder = arrayMove(
+                songs.map((_, index) => index),
+                oldIndex,
+                newIndex
+            );
+            
+            
+            onReorderQueue(newOrder);
+        }
+    };
 
     return (
         <div className="bg-gray-100 rounded-md mt-2 w-full flex flex-col h-[60vh]">
@@ -37,27 +127,29 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({ songs, currentSongI
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto">
-                <ul className="space-y-1">
-                    {songs.map((song, index) => (
-                        <li
-                            key={index}
-                            // highlight the current song
-                            className={`text-gray-700 py-1 px-2 rounded shadow-sm transition-all duration-200 ${
-                                index === currentSongIndex 
-                                    ? 'current-song-playing' 
-                                    : 'bg-white hover:bg-gray-50'
-                            }`}
+                {songs.length > 0 ? (
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={songs.map((_, index) => index)}
+                            strategy={verticalListSortingStrategy}
                         >
-                            {index + 1}. {song.spotifyData.track?.name || ""}
-                            {index === currentSongIndex && (
-                                <span className="ml-2 text-green-600">
-                                    <i className="fas fa-play"></i>
-                                </span>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-                {songs.length === 0 && (
+                            <ul className="space-y-1">
+                                {songs.map((song, index) => (
+                                    <SortableSongItem
+                                        key={index}
+                                        song={song}
+                                        index={index}
+                                        currentSongIndex={currentSongIndex}
+                                    />
+                                ))}
+                            </ul>
+                        </SortableContext>
+                    </DndContext>
+                ) : (
                     <div className="text-center text-gray-500 py-8">
                         <i className="fas fa-music text-2xl mb-2"></i>
                         <p className="text-sm">Add some songs to get started!</p>

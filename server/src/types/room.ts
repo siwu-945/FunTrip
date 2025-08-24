@@ -66,9 +66,21 @@ export class RoomInfo{
     }
 
     public clearQueue() {
-        console.log("🎵 Clearing queue for room:", this.roomID);
+        console.log("Clearing queue for room:", this.roomID);
         this.songStream = [];
-        console.log("📊 Songs after clearing:", this.songStream.length);
+        console.log("Songs after clearing:", this.songStream.length);
+        return this.songStream;
+    }
+
+    public reorderQueue(newOrder: number[]) {        
+        if (newOrder.length !== this.songStream.length) {
+            return this.songStream;
+        }
+        
+        // Create new array with reordered songs
+        const reorderedSongs = newOrder.map(index => this.songStream[index]);
+        this.songStream = reorderedSongs;
+        
         return this.songStream;
     }
 

@@ -119,6 +119,10 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         socket.emit("clearQueue", { roomId, username: currentUser });
     };
 
+    const handleReorderQueue = (newOrder: number[]) => {        
+        socket.emit("reorderQueue", { roomId, newOrder });
+    };
+
     const handleSendMessage = (content: string) => {
         if (content) {
             const messageObj: Message = {
@@ -211,6 +215,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     currentSongIndex={currentSongIndex} 
                     isHost={isHost}
                     onClearQueue={handleClearQueue}
+                    onReorderQueue={handleReorderQueue}
                 />
                 <PlayLists handleAddToQueue={handleAddToQueue} />
 
@@ -254,6 +259,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                         currentSongIndex={currentSongIndex} 
                         isHost={isHost}
                         onClearQueue={handleClearQueue}
+                        onReorderQueue={handleReorderQueue}
                     />
                 </div>
 
