@@ -6,7 +6,7 @@ import TextInput from "../components/TextInput"
 import { ToggleBtn } from "../components/ToggleBtn"
 import JoinedUsers from "../components/Users/JoinedUsers"
 import { SongObj, Message, FormattedMessage, RoomComponentProps } from '../types/index';
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import axios from "axios";
 import { RoomHeader } from "../components/MobileComponents/RoomHeader"
 import { getCookie, removeCookie } from "../tools/Cookies";
@@ -17,11 +17,21 @@ const serverURL = import.meta.env.VITE_SERVER_URL;
 
 export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
     const [playStatus, setPlayStatus] = useState(false);
-    const [progressBar, setProgressBar] = useState(0);
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isParty, setIsParty] = useState(true);
     const [isHost, setIsHost] = useState<boolean>(true);
+    const [currentSongIndex, setCurrentSongIndex] = useState<number>(0);
+    const [isDeletingSong, setIsDeletingSong] = useState<boolean>(false);
+    const deleteTimeoutRef = useRef<number | null>(null);
+
+    const resetDeleteState = () => {
+        setIsDeletingSong(false);
+        if (deleteTimeoutRef.current) {
+            clearTimeout(deleteTimeoutRef.current);
+            deleteTimeoutRef.current = null;
+        }
+    };
 
     useEffect(() => {
         if (socket) {
@@ -29,29 +39,18 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             socket.on("updateSongStream", (songStream: SongObj[]) => {
                 console.log("Song stream updated: ", songStream);
                 setCurrentQueue((prev) => [...prev, ...songStream])
+                resetDeleteState(); 
             })
             socket.on("getCurrentSongStream", (songStream: SongObj[]) => {
                 console.log("Current song stream: ", songStream);
                 setCurrentQueue(songStream)
+                resetDeleteState(); 
             })
 
             // Audio Player Management
             socket.on("updatePlayingStatus", (audioStatus: boolean) => {
                 setPlayStatus(audioStatus)
             })
-
-            // socket.on("currentProgress", ({isPaused, pausedAt, startedAt} : {isPaused : boolean, pausedAt : number, startedAt : number}) => {
-            //     if(isPaused){
-            //         console.log("paused at: ", pausedAt);
-            //         setProgressBar(pausedAt);
-            //     }else{
-            //         const currentTime = Date.now();
-            //         const elapsedTime = currentTime - startedAt;
-            //         console.log("currentTime: ", currentTime, " startedAt: ", startedAt, " elapsedTime: ", elapsedTime);
-            //         const progress = (elapsedTime / (pausedAt - startedAt)) * 100;
-            //         setProgressBar(progress);
-            //     }
-            // })
 
             // Listen for incoming messages
             socket.on('receiveMessage', (message: Message) => {
@@ -60,6 +59,25 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
 
             socket.on('roomtypeChanged', (isParty: boolean) => {
                 setIsParty(isParty);
+            });
+
+            socket.on('clearQueueError', (error: { message: string }) => {
+                console.error("Clear queue error:", error.message);
+                resetDeleteState(); 
+            });
+
+            socket.on('deleteSongError', (error: { message: string }) => {
+                console.error("Delete song error:", error.message);
+                resetDeleteState(); 
+            });
+
+            socket.on('progressSync', (progress: { currentSongIndex: number, currentTime: number, isPaused: boolean }) => {
+                console.log("Room received progress sync:", progress);
+                setCurrentSongIndex(progress.currentSongIndex);
+            });
+
+            socket.on('songIndexUpdated', ({ songIndex, songName }: { songIndex: number, songName: string }) => {
+                setCurrentSongIndex(songIndex);
             });
 
         }
@@ -108,6 +126,29 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         socket.emit("addSongToStream", { selectedTracks, roomId })
     };
 
+    const handleClearQueue = () => {
+        console.log("Current song stream before clearing:", {
+            songsCount: currentQueue.length,
+            songs: currentQueue.map(s => s.spotifyData.track?.name),
+            currentSongIndex
+        });
+        
+        socket.emit("clearQueue", { roomId, username: currentUser });
+    };
+
+    const handleReorderQueue = (newOrder: SongObj[]) => {
+        console.log("Reordering queue:", {
+            oldOrder: currentQueue.map(s => s.spotifyData.track?.name),
+            newOrder: newOrder.map(s => s.spotifyData.track?.name)
+        });
+        
+        socket.emit("reorderQueue", { 
+            roomId, 
+            username: currentUser,
+            newOrder: newOrder.map(song => song.spotifyData)
+        });
+    };
+
     const handleSendMessage = (content: string) => {
         if (content) {
             const messageObj: Message = {
@@ -132,6 +173,34 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         removeCookie("roomId");
 
         socket.emit("exitRoom", roomId);
+    };
+
+    const handleDeleteSong = (songIndex: number) => {
+        console.log("Deleting song:", {
+            songIndex,
+            songName: currentQueue[songIndex]?.spotifyData.track?.name
+        });
+        
+        // Prevent multiple deletions
+        if (isDeletingSong) {
+            console.log("Delete operation already in progress, ignoring click");
+            return;
+        }
+        
+        // Set loading state
+        setIsDeletingSong(true);
+        
+        // Add timeout fallback
+        deleteTimeoutRef.current = setTimeout(() => {
+            console.log("Delete operation timeout, resetting loading state");
+            setIsDeletingSong(false);
+        }, 5000);
+        
+        socket.emit("deleteSong", { 
+            roomId, 
+            username: currentUser,
+            songIndex 
+        });
     };
 
     const formattedMessages = messages.reduce<FormattedMessage[]>((acc, msg, index) => {
@@ -183,18 +252,34 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     }}
                 />
                 {(isParty && isHost || !isParty) ?
-                    <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty} />
+                    <MainAudioPlayer 
+                        songs={currentQueue} 
+                        audioPaused={playStatus} 
+                        socket={socket} 
+                        roomId={roomId} 
+                        partyMode={isParty}
+                        onCurrentSongChange={setCurrentSongIndex}
+                    />
                     :
                     <GuestAudioPlayer />
                 }
                 <FunctionBar handleAddToQueue={handleAddToQueue}/>
-                <CurrentSongQueue songs={currentQueue} />
+                <CurrentSongQueue 
+                    songs={currentQueue} 
+                    currentSongIndex={currentSongIndex} 
+                    isHost={isHost}
+                    onClearQueue={handleClearQueue}
+                    onReorderQueue={handleReorderQueue}
+                    onDeleteSong={handleDeleteSong}
+                    isDeletingSong={isDeletingSong}
+                />
                 <PlayLists handleAddToQueue={handleAddToQueue} />
 
                 {/* <AudioPlayer songs={[]} currentIndex={1} currentAudioUrl="a" handleNext={null} handlePrevious={null} /> */}
             </div>
         )
     }
+    // TODO: separate mobile ui and desktop ui
     return (
         <div className="w-screen flex h-screen">
             <JoinedUsers
@@ -214,11 +299,26 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                         <ToggleBtn isParty={isParty} isHost={isHost} setIsParty={setIsParty} />
                     </div>
                     {(isParty && isHost || !isParty) ?
-                        <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty} />
+                        <MainAudioPlayer 
+                            songs={currentQueue} 
+                            audioPaused={playStatus} 
+                            socket={socket} 
+                            roomId={roomId} 
+                            partyMode={isParty}
+                            onCurrentSongChange={setCurrentSongIndex}
+                        />
                         :
                         <GuestAudioPlayer />
                     }
-                    <CurrentSongQueue songs={currentQueue} />
+                    <CurrentSongQueue 
+                        songs={currentQueue} 
+                        currentSongIndex={currentSongIndex} 
+                        isHost={isHost}
+                        onClearQueue={handleClearQueue}
+                        onReorderQueue={handleReorderQueue}
+                        onDeleteSong={handleDeleteSong}
+                        isDeletingSong={isDeletingSong}
+                    />
                 </div>
 
                 {/* Text Input at the bottom */}

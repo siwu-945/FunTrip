@@ -5,16 +5,71 @@ import { AudioPlayerProps, DownloadResponse, SongObj } from "../../types";
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
-const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
+const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurrentSongChange }) => {
     const [currentAudioUrl, setCurrentAudioUrl] = useState("")
     const [currentIndex, setCurrentIndex] = useState(0);
     const [progressTime, setProgressTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [currentSongIndex, setCurrentSongIndex] = useState<number>(0);
+    const [isSynced, setIsSynced] = useState(false);
 
     const [populatedSongInfo, setPopulatedSongInfo] = useState([]);
     const audioRef = useRef(null);
+
+    useEffect(() => {
+        if (socket && roomId && songs.length > 0) {
+            socket.emit("requestProgressSync", { roomId });
+        }
+    }, [socket, roomId, songs.length]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleProgressSync = (progress) => {
+            console.log("Received progress sync:", progress);
+            
+            if (progress.currentSongIndex !== currentIndex) {
+                setCurrentIndex(progress.currentSongIndex);
+                onCurrentSongChange?.(progress.currentSongIndex);
+            }
+            
+            if (progress.currentTime > 0) {
+                console.log("Syncing to time:", progress.currentTime);
+                setProgressTime(progress.currentTime / 1000); // Convert to seconds
+            }
+            
+            setIsSynced(true);
+        };
+
+        const handleSongIndexUpdated = ({ songIndex, songName }) => {
+            setCurrentIndex(songIndex);
+            onCurrentSongChange?.(songIndex);
+        };
+
+        const handlePlaybackStarted = (progress) => {
+            console.log("Playback started:", progress);
+            setIsPlaying(true);
+        };
+
+        const handlePlaybackPaused = (progress) => {
+            console.log("Playback paused:", progress);
+            setIsPlaying(false);
+        };
+
+        socket.on("progressSync", handleProgressSync);
+        socket.on("songIndexUpdated", handleSongIndexUpdated);
+        socket.on("playbackStarted", handlePlaybackStarted);
+        socket.on("playbackPaused", handlePlaybackPaused);
+
+        return () => {
+            socket.off("progressSync", handleProgressSync);
+            socket.off("songIndexUpdated", handleSongIndexUpdated);
+            socket.off("playbackStarted", handlePlaybackStarted);
+            socket.off("playbackPaused", handlePlaybackPaused);
+        };
+    }, [socket, currentIndex, onCurrentSongChange]);
 
     // TODO: retrival should be done in the backend
     const retrieveAudio = async (songIndex) => {
@@ -57,13 +112,16 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
 
         const firstAudio = await retrieveAudio(currentIndex);
         setCurrentAudioUrl(firstAudio);
-        if (audioRef.current) {
+        
+        // set the synced progress time
+        if (audioRef.current && progressTime > 0) {
             audioRef.current.currentTime = progressTime;
         }
         trackSongStartTime();
     }
 
     const handleNext = async () => {
+        // TODO: circle back to the first song if the current index is the last song
         if (currentIndex + 1 >= songs.length) {
             console.log("index out of range, song len: " + songs.length)
             return;
@@ -78,6 +136,12 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
         }
         setCurrentAudioUrl(audioUrl);
         setCurrentIndex(nextSongIdx);
+        
+        // send song index change to backend
+        if (socket && roomId) {
+            socket.emit("updateSongIndex", { roomId, songIndex: nextSongIdx });
+        }
+        
         trackSongStartTime();
         if (audioRef.current) {
             audioRef.current.currentTime = 0;
@@ -98,6 +162,11 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
         }
         setCurrentAudioUrl(audioUrl);
         setCurrentIndex(prevSongIdx);
+        
+        if (socket && roomId) {
+            socket.emit("updateSongIndex", { roomId, songIndex: prevSongIdx });
+        }
+        
         trackSongStartTime();
         if (audioRef.current) {
             audioRef.current.currentTime = 0;
@@ -110,8 +179,14 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
 
         if (isPlaying) {
             audio.pause();
+            if (socket && roomId) {
+                socket.emit("pausePlayback", { roomId });
+            }
         } else {
             audio.play();
+            if (socket && roomId) {
+                socket.emit("startPlayback", { roomId });
+            }
         }
     };
 
@@ -221,7 +296,21 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
 
     const getCurrentSong = () => songs[currentIndex];
     const currentSong = getCurrentSong();
+    useEffect(() => {
+        if (songs.length > 0 && currentSongIndex < songs.length) {
+            // Notify parent component about current song change
+            if (onCurrentSongChange) {
+                onCurrentSongChange(currentSongIndex);
+            }
+        }
+    }, [currentSongIndex, songs, onCurrentSongChange]);
 
+    // Notify parent when current index changes
+    useEffect(() => {
+        if (onCurrentSongChange) {
+            onCurrentSongChange(currentIndex);
+        }
+    }, [currentIndex, onCurrentSongChange]);
     return (
         <section className="p-6 bg-[#F8F8F6] relative">
             <div className="flex items-center gap-4">
@@ -259,6 +348,13 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode }) => {
                             {currentSong?.spotifyData?.track?.artists?.[0]?.name || 'Unknown artist'}
                         </span>
                     </p>
+                    {/* Sync indicator */}
+                    <div className="flex items-center gap-2 mt-1">
+                        <div className={`w-2 h-2 rounded-full ${isSynced ? 'bg-green-500' : 'bg-yellow-500'} animate-pulse`}></div>
+                        <span className="text-xs text-gray-500">
+                            {isSynced ? 'Synced' : 'Syncing...'}
+                        </span>
+                    </div>
                 </div>
             </div>
 
