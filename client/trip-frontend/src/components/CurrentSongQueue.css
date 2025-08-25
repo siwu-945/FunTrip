@@ -16,7 +16,6 @@
     border-radius: 0 0 4px 4px;
 }
 
-/* Drag and drop styles */
 .sortable-item {
     transition: all 0.2s ease;
 }
@@ -36,7 +35,6 @@
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-/* Grip handle styles */
 .grip-handle {
     cursor: grab;
     color: #9ca3af;
@@ -50,4 +48,36 @@
 .grip-handle:active {
     cursor: grabbing;
     color: #4b5563;
+}
+
+.sortable-item:hover .delete-button {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.delete-button {
+    transition: all 0.2s ease-in-out;
+}
+
+.delete-button:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.delete-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spinner {
+    animation: spin 1s linear infinite;
 }

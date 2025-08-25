@@ -72,14 +72,36 @@ export class RoomInfo{
         return this.songStream;
     }
 
-    public reorderQueue(newOrder: number[]) {        
-        if (newOrder.length !== this.songStream.length) {
-            return this.songStream;
-        }
+    public reorderQueue(newOrder: SpotifyApi.PlaylistTrackObject[]) {
+        console.log("Songs before reordering:", this.songStream.length);
         
-        // Create new array with reordered songs
-        const reorderedSongs = newOrder.map(index => this.songStream[index]);
-        this.songStream = reorderedSongs;
+        const newSongStream: SongObj[] = newOrder.map((track) => ({
+            spotifyData: track,
+        }));
+        
+        this.songStream = newSongStream;
+        console.log("Songs after reordering:", this.songStream.length);
+        return this.songStream;
+    }
+
+    public deleteSong(songIndex: number) {
+        console.log("Deleting song from queue:", {
+            roomId: this.roomID,
+            songIndex,
+            songName: this.songStream[songIndex]?.spotifyData.track?.name,
+            totalSongsBefore: this.songStream.length
+        });
+        
+        if (songIndex >= 0 && songIndex < this.songStream.length) {
+            const deletedSong = this.songStream[songIndex];
+            this.songStream.splice(songIndex, 1);
+            console.log("Song deleted successfully:", {
+                deletedSong: deletedSong?.spotifyData.track?.name,
+                totalSongsAfter: this.songStream.length
+            });
+        } else {
+            console.error("Invalid song index:", songIndex, "SongStream length:", this.songStream.length);
+        }
         
         return this.songStream;
     }

@@ -170,16 +170,40 @@ export default function initSockets(httpServer: HTTPServer) {
             updateCurrentSongQueue(clearedQueue, roomId);
         })
 
-        socket.on("reorderQueue", ({roomId, newOrder} : {roomId : string, newOrder: number[]}) => {
+        socket.on("deleteSong", ({roomId, username, songIndex} : {roomId : string, username : string, songIndex : number}) => {
             if (!rooms[roomId]) {
                 console.error("No such room exist");
                 return;
             }
             
-            console.log("Current song stream before reordering:", {
-                songsCount: rooms[roomId].getSongStream.length,
-                songs: rooms[roomId].getSongStream.map(s => s.spotifyData.track?.name)
+            // Check if user is host
+            if (rooms[roomId].hostID !== username) {
+                console.error("User is not host, cannot delete song");
+                socket.emit('deleteSongError', { message: 'Only the host can delete songs' });
+                return;
+            }
+            
+            console.log("Delete Song request from host:", username, "for room:", roomId, "songIndex:", songIndex);
+            
+            // Delete the song
+            const updatedQueue = rooms[roomId].deleteSong(songIndex);
+            
+            console.log("Current song stream after deletion:", {
+                songsCount: updatedQueue.length,
+                songs: updatedQueue.map(s => s.spotifyData.track?.name)
             });
+            
+            // Update all clients in the room
+            updateCurrentSongQueue(updatedQueue, roomId);
+        })
+
+        socket.on("reorderQueue", ({roomId, username, newOrder} : {roomId : string, username : string, newOrder: SpotifyApi.PlaylistTrackObject[]}) => {
+            if (!rooms[roomId]) {
+                console.error("No such room exist");
+                return;
+            }
+            
+            console.log("Reorder Queue request from user:", username, "for room:", roomId);
             
             // Reorder the queue
             const reorderedQueue = rooms[roomId].reorderQueue(newOrder);

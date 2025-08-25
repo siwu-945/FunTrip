@@ -26,14 +26,19 @@ interface CurrentSongQueueProps {
     currentSongIndex: number;
     isHost: boolean;
     onClearQueue: () => void;
-    onReorderQueue: (newOrder: number[]) => void;
+    onReorderQueue: (newOrder: SongObj[]) => void;
+    onDeleteSong: (songIndex: number) => void;
+    isDeletingSong: boolean;
 }
 
 const SortableSongItem: React.FC<{
     song: SongObj;
     index: number;
     currentSongIndex: number;
-}> = ({ song, index, currentSongIndex }) => {
+    isHost: boolean;
+    onDeleteSong: (songIndex: number) => void;
+    isDeletingSong: boolean;
+}> = ({ song, index, currentSongIndex, isHost, onDeleteSong, isDeletingSong }) => {
     const {
         attributes,
         listeners,
@@ -55,14 +60,14 @@ const SortableSongItem: React.FC<{
             style={style}
             {...attributes}
             {...listeners}
-            className={`sortable-item text-gray-700 py-1 px-2 rounded shadow-sm transition-all duration-200 cursor-move ${
+            className={`sortable-item text-gray-700 py-1 px-2 rounded shadow-sm transition-all duration-200 cursor-move group relative ${
                 index === currentSongIndex 
                     ? 'current-song-playing' 
                     : 'bg-white hover:bg-gray-50'
-            } ${isDragging ? 'dragging' : ''}`}
+            }`}
         >
             <div className="flex items-center gap-2">
-                <i className="fas fa-grip-vertical grip-handle text-xs"></i>
+                <i className="fas fa-grip-vertical text-gray-400 text-xs"></i>
                 <span>{index + 1}. {song.spotifyData.track?.name || ""}</span>
                 {index === currentSongIndex && (
                     <span className="ml-2 text-green-600">
@@ -70,12 +75,50 @@ const SortableSongItem: React.FC<{
                     </span>
                 )}
             </div>
+            
+            {/* Delete only visible to host on hover */}
+            {isHost && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDeletingSong) {
+                            console.log("Deleting song:", {
+                                index,
+                                songName: song.spotifyData.track?.name
+                            });
+                            onDeleteSong(index);
+                        }
+                    }}
+                    disabled={isDeletingSong}
+                    className={`delete-button absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 
+                             w-5 h-5 rounded-full flex items-center justify-center text-xs
+                             ${isDeletingSong 
+                                 ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                 : 'bg-red-500 text-white hover:bg-red-600'
+                             }`}
+                    title={isDeletingSong ? "Deleting..." : "Delete song"}
+                >
+                    {isDeletingSong ? (
+                        <i className="fas fa-spinner fa-spin text-xs"></i>
+                    ) : (
+                        <i className="fas fa-times"></i>
+                    )}
+                </button>
+            )}
         </li>
     );
 };
 
 // TODO update the song names with actual added songs
-const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({ songs, currentSongIndex, isHost, onClearQueue, onReorderQueue }) => {
+const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({ 
+    songs, 
+    currentSongIndex, 
+    isHost, 
+    onClearQueue,
+    onReorderQueue,
+    onDeleteSong,
+    isDeletingSong
+}) => {
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -90,14 +133,13 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({ songs, currentSongI
             const oldIndex = Number(active.id);
             const newIndex = Number(over?.id);
             
-            // Create new order array
-            const newOrder = arrayMove(
-                songs.map((_, index) => index),
-                oldIndex,
-                newIndex
-            );
+            console.log("Reordering songs:", {
+                fromIndex: oldIndex,
+                toIndex: newIndex,
+                songName: songs[oldIndex]?.spotifyData.track?.name
+            });
             
-            
+            const newOrder = arrayMove(songs, oldIndex, newIndex);
             onReorderQueue(newOrder);
         }
     };
@@ -144,6 +186,9 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({ songs, currentSongI
                                         song={song}
                                         index={index}
                                         currentSongIndex={currentSongIndex}
+                                        isHost={isHost}
+                                        onDeleteSong={onDeleteSong}
+                                        isDeletingSong={isDeletingSong}
                                     />
                                 ))}
                             </ul>
