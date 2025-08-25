@@ -9,6 +9,7 @@ export class RoomInfo{
     isParty: boolean;
     pasuedAt : number;
     startedAt : number;
+    currentSongIndex: number;
     requiresPassword : boolean;
     password? : string;
 
@@ -28,6 +29,7 @@ export class RoomInfo{
         this.isParty = true;
         this.pasuedAt = 0;
         this.startedAt = 0;
+        this.currentSongIndex = 0;
     }
 
     /**
@@ -111,11 +113,38 @@ export class RoomInfo{
     }
 
     public getCurrentProgress() {
+        const currentTime = this.isPaused ? this.pasuedAt : Date.now() - this.startedAt;
         return {
             isPaused : this.isPaused,
             pasuedAt: this.pasuedAt,
-            startedAt : this.startedAt
+            startedAt : this.startedAt,
+            currentTime: Math.max(0, currentTime),
+            currentSongIndex: this.currentSongIndex
         }
     }
 
+    public updateCurrentSongIndex(index: number) {
+        this.currentSongIndex = index;
+    }
+
+    public startSongPlayback() {
+        console.log("Starting song playback:", {
+            roomId: this.roomID,
+            songIndex: this.currentSongIndex,
+            songName: this.songStream[this.currentSongIndex]?.spotifyData.track?.name
+        });
+        this.startedAt = Date.now();
+        this.pasuedAt = 0;
+        this.isPaused = false;
+    }
+
+    public pauseSongPlayback() {
+        console.log("Pausing song playback:", {
+            roomId: this.roomID,
+            songIndex: this.currentSongIndex,
+            songName: this.songStream[this.currentSongIndex]?.spotifyData.track?.name
+        });
+        this.pasuedAt = Date.now() - this.startedAt;
+        this.isPaused = true;
+    }
 }

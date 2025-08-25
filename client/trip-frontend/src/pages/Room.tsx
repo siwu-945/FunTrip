@@ -17,7 +17,6 @@ const serverURL = import.meta.env.VITE_SERVER_URL;
 
 export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
     const [playStatus, setPlayStatus] = useState(false);
-    const [progressBar, setProgressBar] = useState(0);
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isParty, setIsParty] = useState(true);
@@ -53,19 +52,6 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 setPlayStatus(audioStatus)
             })
 
-            // socket.on("currentProgress", ({isPaused, pausedAt, startedAt} : {isPaused : boolean, pausedAt : number, startedAt : number}) => {
-            //     if(isPaused){
-            //         console.log("paused at: ", pausedAt);
-            //         setProgressBar(pausedAt);
-            //     }else{
-            //         const currentTime = Date.now();
-            //         const elapsedTime = currentTime - startedAt;
-            //         console.log("currentTime: ", currentTime, " startedAt: ", startedAt, " elapsedTime: ", elapsedTime);
-            //         const progress = (elapsedTime / (pausedAt - startedAt)) * 100;
-            //         setProgressBar(progress);
-            //     }
-            // })
-
             // Listen for incoming messages
             socket.on('receiveMessage', (message: Message) => {
                 setMessages(prev => [...prev, message]);
@@ -83,6 +69,15 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             socket.on('deleteSongError', (error: { message: string }) => {
                 console.error("Delete song error:", error.message);
                 resetDeleteState(); 
+            });
+
+            socket.on('progressSync', (progress: { currentSongIndex: number, currentTime: number, isPaused: boolean }) => {
+                console.log("Room received progress sync:", progress);
+                setCurrentSongIndex(progress.currentSongIndex);
+            });
+
+            socket.on('songIndexUpdated', ({ songIndex, songName }: { songIndex: number, songName: string }) => {
+                setCurrentSongIndex(songIndex);
             });
 
         }
