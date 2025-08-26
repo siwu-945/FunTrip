@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { SearchResult, SearchResponse, PlaylistProps } from "../types/index";
-import Modal from "./Popups/Modal2.tsx";
+import SearchModal from "./Popups/SearchModal.tsx";
 const serverURL = import.meta.env.VITE_SERVER_URL;
-
-interface SongSearchProps {
-  handleAddToQueue: (tracks: SpotifyApi.PlaylistTrackObject[]) => void;
-}
 
 const SongSearch = ({ handleAddToQueue, isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -116,7 +112,7 @@ const SongSearch = ({ handleAddToQueue, isOpen, onClose }) => {
   }, [isOpen]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Search Songs">
+    <SearchModal isOpen={isOpen} onClose={onClose} title="Search Songs">
       <div className="space-y-4">
         {/* Search Bar */}
         <div className="relative group">
@@ -247,7 +243,7 @@ className="absolute right-3 top-1/2 transform -translate-y-1/2
           </div>
         )}
       </div>
-    </Modal>
+    </SearchModal>
   );
 };
 
