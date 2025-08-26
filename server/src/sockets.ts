@@ -95,6 +95,10 @@ export default function initSockets(httpServer: HTTPServer) {
     }
     
     io.on('connection', (socket) => {
+        socket.on('userRejoined', ({roomId, username} : {roomId:string; username:string}) =>{
+            socket.join(roomId)
+            io.to(roomId).emit("getCurrentSongStream", [...rooms[roomId].getSongStream])
+        })
         // separate create and join
         socket.on('joinRoom', ({roomId, username, action, password}: {roomId: string; username: string; action: 'create' | 'join'; password?: string}) => {
             if (action === 'create') {

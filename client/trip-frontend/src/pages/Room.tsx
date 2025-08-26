@@ -1,11 +1,7 @@
 import { GuestAudioPlayer } from "../components/Audio/GuestAudioPlayer"
 import MainAudioPlayer from "../components/Audio/MainAudioPlayer"
 import CurrentSongQueue from "../components/CurrentSongQueue"
-import PlayLists from "../components/PlayLists"
-import TextInput from "../components/TextInput"
-import { ToggleBtn } from "../components/ToggleBtn"
-import JoinedUsers from "../components/Users/JoinedUsers"
-import { SongObj, Message, FormattedMessage, RoomComponentProps } from '../types/index';
+import { SongObj, Message, FormattedMessage, RoomComponentProps, UserSession } from '../types/index';
 import { useState, useEffect } from "react"
 import axios from "axios";
 import { RoomHeader } from "../components/MobileComponents/RoomHeader"
@@ -14,6 +10,8 @@ import FunctionBar from "../components/MobileComponents/FunctionBar"
 
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
+const SESSION_KEY = 'spotify_room_session';
+const SESSION_EXPIRY_HOURS = 2;
 
 export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
     const [playStatus, setPlayStatus] = useState(false);
@@ -25,6 +23,14 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
 
     useEffect(() => {
         if (socket) {
+            const savedSession = getSavedUserSession()
+            if(savedSession){
+                socket.emit("userRejoined", {
+                    roomId: savedSession.roomId,
+                    username: savedSession.username
+                })
+                clearSavedUserSession();
+            }
             // Playlist management
             socket.on("updateSongStream", (songStream: SongObj[]) => {
                 console.log("Song stream updated: ", songStream);
@@ -91,9 +97,6 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         checkHostStatus();
     }, [roomId, currentUser]);
 
-    // useEffect(() => {
-    //     console.log("current song stream: ", currentQueue);
-    // }, [currentQueue]);
     useEffect(() => {
         async function setCurrentRoomStatus() {
             const response = await axios.post<{ isParty: boolean }>(`${serverURL}/room/${roomId}/setParty`, {
@@ -107,7 +110,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         socket.emit("addSongToStream", { selectedTracks, roomId })
     };
-
+    
     const handleSendMessage = (content: string) => {
         if (content) {
             const messageObj: Message = {
@@ -169,6 +172,43 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         return acc;
     }, []);
 
+    function saveCurrentUserSession() {
+        const sessionData: UserSession = {
+            roomId: roomId,
+            username: currentUser
+        };
+        try {
+            localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+            console.log('Session saved successfully');
+        } catch (error) {
+            console.error('Failed to save session:', error);
+        }
+    }
+
+    function getSavedUserSession(): UserSession | null {
+        try {
+            const savedSession = localStorage.getItem(SESSION_KEY);
+            if (!savedSession) {
+                return null;
+            }
+            const sessionData: UserSession = JSON.parse(savedSession);
+            return sessionData;
+
+        } catch (error) {
+            console.error('Failed to retrieve session:', error);
+            clearSavedUserSession();
+            return null;
+        }
+    }
+
+    function clearSavedUserSession(): void {
+        try {
+            localStorage.removeItem(SESSION_KEY);
+            console.log('Session cleared');
+        } catch (error) {
+            console.error('Failed to clear session:', error);
+        }
+    }
 
     if (true) {
         return (
@@ -187,48 +227,9 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     :
                     <GuestAudioPlayer />
                 }
-                <FunctionBar handleAddToQueue={handleAddToQueue}/>
+                <FunctionBar handleAddToQueue={handleAddToQueue} roomId={roomId} saveCurrentUserSession={saveCurrentUserSession}/>
                 <CurrentSongQueue songs={currentQueue} />
-                <PlayLists handleAddToQueue={handleAddToQueue} />
-
-                {/* <AudioPlayer songs={[]} currentIndex={1} currentAudioUrl="a" handleNext={null} handlePrevious={null} /> */}
             </div>
         )
     }
-    return (
-        <div className="w-screen flex h-screen">
-            <JoinedUsers
-                socket={socket}
-                roomName={roomId}
-                setUserJoined={setUserJoined}
-                currentUser={currentUser}
-                messages={formattedMessages}
-            />
-            <div className="flex-1 flex flex-col justify-between">
-                {/* Main area above the search bar */}
-                <div className="p-6">
-                    {/* Room name and Current Song Queue */}
-                    <div className="flex items-center gap-3 ">
-                        <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
-
-                        <ToggleBtn isParty={isParty} isHost={isHost} setIsParty={setIsParty} />
-                    </div>
-                    {(isParty && isHost || !isParty) ?
-                        <MainAudioPlayer songs={currentQueue} audioPaused={playStatus} socket={socket} roomId={roomId} partyMode={isParty} />
-                        :
-                        <GuestAudioPlayer />
-                    }
-                    <CurrentSongQueue songs={currentQueue} />
-                </div>
-
-                {/* Text Input at the bottom */}
-                <div className="flex justify-center pb-4 px-4">
-                    <div className="w-full">
-                        <TextInput onSendMessage={handleSendMessage} />
-                    </div>
-                </div>
-            </div>
-            <PlayLists handleAddToQueue={handleAddToQueue} />
-        </div>
-    )
 }
