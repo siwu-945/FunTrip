@@ -30,6 +30,10 @@ export interface User {
 
 export interface PlaylistProps {
     handleAddToQueue: (tracks: SpotifyApi.PlaylistTrackObject[]) => void; // Function that takes an array of strings and returns nothing (void)
+    isOpen : boolean;
+    onClose : () => void;
+    roomId : string;
+    saveCurrentUserSession : ()=> void;
 }
 
 export interface RoomComponentProps {
@@ -93,4 +97,9 @@ export interface RoomHeaderProps {
   isHost: boolean;
   setIsParty: (isParty: boolean) => void;
   onExitRoom: () => void;
+}
+
+export interface UserSession{
+    roomId: string;
+    username: string;
 }
