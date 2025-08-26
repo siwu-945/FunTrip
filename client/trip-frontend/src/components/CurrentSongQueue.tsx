@@ -60,20 +60,29 @@ const SortableSongItem: React.FC<{
             style={style}
             {...attributes}
             {...listeners}
-            className={`sortable-item text-gray-700 py-1 px-2 rounded shadow-sm transition-all duration-200 cursor-move group relative ${
+            className={`sortable-item text-gray-700 py-2 px-3 rounded-lg shadow-sm transition-all duration-200 cursor-move group relative ${
                 index === currentSongIndex 
                     ? 'current-song-playing' 
                     : 'bg-white hover:bg-gray-50'
             }`}
         >
-            <div className="flex items-center gap-2">
-                <i className="fas fa-grip-vertical text-gray-400 text-xs"></i>
-                <span>{index + 1}. {song.spotifyData.track?.name || ""}</span>
-                {index === currentSongIndex && (
-                    <span className="ml-2 text-green-600">
-                        <i className="fas fa-play"></i>
-                    </span>
-                )}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1">
+                    <i className="fas fa-grip-vertical text-gray-400 text-xs"></i>
+                    <div className="flex-1">
+                        <div className="font-medium text-gray-800 flex items-center gap-2">
+                            {song.spotifyData.track?.name || ""}
+                            {index === currentSongIndex && (
+                                <span className="text-green-600">
+                                    <i className="fas fa-play"></i>
+                                </span>
+                            )}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                            {song.spotifyData.track?.artists?.[0]?.name || ""}
+                        </div>
+                    </div>
+                </div>
             </div>
             
             {/* Delete only visible to host on hover */}
@@ -90,18 +99,15 @@ const SortableSongItem: React.FC<{
                         }
                     }}
                     disabled={isDeletingSong}
-                    className={`delete-button absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 
-                             w-5 h-5 rounded-full flex items-center justify-center text-xs
-                             ${isDeletingSong 
-                                 ? 'bg-gray-400 text-white cursor-not-allowed' 
-                                 : 'bg-red-500 text-white hover:bg-red-600'
-                             }`}
+                    className={`delete-button opacity-0 group-hover:opacity-100 
+                             cursor-pointer
+                             ${isDeletingSong ? 'cursor-not-allowed' : ''}`}
                     title={isDeletingSong ? "Deleting..." : "Delete song"}
                 >
                     {isDeletingSong ? (
-                        <i className="fas fa-spinner fa-spin text-xs"></i>
+                        <i className="fas fa-spinner fa-spin text-sm"></i>
                     ) : (
-                        <i className="fas fa-times"></i>
+                        <span className="text-lg font-light">−</span>
                     )}
                 </button>
             )}
@@ -179,7 +185,7 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
                             items={songs.map((_, index) => index)}
                             strategy={verticalListSortingStrategy}
                         >
-                            <ul className="space-y-1">
+                            <ul className="space-y-2">
                                 {songs.map((song, index) => (
                                     <SortableSongItem
                                         key={index}
