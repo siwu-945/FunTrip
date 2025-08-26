@@ -145,7 +145,7 @@ const PlayLists: React.FC<PlaylistProps> = ({ handleAddToQueue, isOpen, onClose,
         saveCurrentUserSession()
     }
 
-return (
+    return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Backdrop */}
         <div
@@ -189,8 +189,6 @@ return (
                                 ></i>
                             </div>
                         </div>
-
-                        <SongSearch handleAddToQueue={handleAddToQueue} isOpen={false} onClose={() => {}} />
                   
                         {/* Playlist Selection */}
                         {showDropdown && (
@@ -308,6 +306,7 @@ return (
             </div>
         </div>
     </div>
-);
+    );
+};
 
 export default PlayLists;
