@@ -133,6 +133,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
 
         removeCookie("username");
         removeCookie("roomId");
+        localStorage.removeItem('spotify_tokens');
 
         socket.emit("exitRoom", roomId);
     };
