@@ -317,7 +317,13 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     onDeleteSong={handleDeleteSong}
                     isDeletingSong={isDeletingSong}
                 />
-                <PlayLists handleAddToQueue={handleAddToQueue} />
+                <PlayLists 
+                    handleAddToQueue={handleAddToQueue} 
+                    isOpen={false}
+                    onClose={() => {}}
+                    roomId={roomId}
+                    saveCurrentUserSession={saveCurrentUserSession}
+                />
 
                 {/* <AudioPlayer songs={[]} currentIndex={1} currentAudioUrl="a" handleNext={null} handlePrevious={null} /> */}
             </div>
@@ -372,7 +378,13 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     </div>
                 </div>
             </div>
-            <PlayLists handleAddToQueue={handleAddToQueue} />
+            <PlayLists 
+                handleAddToQueue={handleAddToQueue} 
+                isOpen={false}
+                onClose={() => {}}
+                roomId={roomId}
+                saveCurrentUserSession={saveCurrentUserSession}
+            />
         </div>
     )
 }
