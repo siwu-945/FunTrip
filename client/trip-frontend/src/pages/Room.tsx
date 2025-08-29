@@ -318,74 +318,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     onDeleteSong={handleDeleteSong}
                     isDeletingSong={isDeletingSong}
                 />
-                <PlayLists 
-                    handleAddToQueue={handleAddToQueue} 
-                    isOpen={false}
-                    onClose={() => {}}
-                    roomId={roomId}
-                    saveCurrentUserSession={saveCurrentUserSession}
-                />
-
-                {/* <AudioPlayer songs={[]} currentIndex={1} currentAudioUrl="a" handleNext={null} handlePrevious={null} /> */}
             </div>
         )
     }
-    // TODO: separate mobile ui and desktop ui
-    return (
-        <div className="w-screen flex h-screen">
-            <JoinedUsers
-                socket={socket}
-                roomName={roomId}
-                setUserJoined={setUserJoined}
-                currentUser={currentUser}
-                messages={formattedMessages}
-            />
-            <div className="flex-1 flex flex-col justify-between">
-                {/* Main area above the search bar */}
-                <div className="p-6">
-                    {/* Room name and Current Song Queue */}
-                    <div className="flex items-center gap-3 ">
-                        <h1 className="text-2xl font-bold mb-2">{roomId}</h1>
-
-                        <ToggleBtn isParty={isParty} isHost={isHost} setIsParty={setIsParty} />
-                    </div>
-                    {(isParty && isHost || !isParty) ?
-                        <MainAudioPlayer 
-                            songs={currentQueue} 
-                            audioPaused={playStatus} 
-                            socket={socket} 
-                            roomId={roomId} 
-                            partyMode={isParty}
-                            onCurrentSongChange={setCurrentSongIndex}
-                        />
-                        :
-                        <GuestAudioPlayer />
-                    }
-                    <CurrentSongQueue 
-                        songs={currentQueue} 
-                        currentSongIndex={currentSongIndex} 
-                        isHost={isHost}
-                        onClearQueue={handleClearQueue}
-                        onReorderQueue={handleReorderQueue}
-                        onDeleteSong={handleDeleteSong}
-                        isDeletingSong={isDeletingSong}
-                    />
-                </div>
-
-                {/* Text Input at the bottom */}
-                <div className="flex justify-center pb-4 px-4">
-                    <div className="w-full">
-                        <TextInput onSendMessage={handleSendMessage} />
-                    </div>
-                </div>
-            </div>
-            <PlayLists 
-                handleAddToQueue={handleAddToQueue} 
-                isOpen={false}
-                onClose={() => {}}
-                roomId={roomId}
-                saveCurrentUserSession={saveCurrentUserSession}
-            />
-        </div>
-    )
-}
+};

@@ -169,7 +169,7 @@ const PlayLists: React.FC<PlaylistProps> = ({ handleAddToQueue, isOpen, onClose,
 
             {/* Content */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-                {authCode && accessToken ? (
+                {accessToken ? (
                     <div className="space-y-6">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">

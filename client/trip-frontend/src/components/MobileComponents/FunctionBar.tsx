@@ -40,7 +40,6 @@ const FunctionBar = ({ handleAddToQueue, roomId, saveCurrentUserSession}) => {
         isOpen={isUploadModalOpen}
         onClose={() => {
           setIsUploadModalOpen(false)
-          console.log("closing")
         }} 
         roomId={roomId}
         saveCurrentUserSession={saveCurrentUserSession}
