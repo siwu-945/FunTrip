@@ -235,7 +235,6 @@ const PlayLists: React.FC<PlaylistProps> = ({ handleAddToQueue, isOpen, onClose,
                                         {selectedSongItems.length} of {songItems.length} selected
                                     </span>
                                 </div>
-
                                 {/* Songs List */}
                                 <div className="max-h-64 overflow-y-auto border rounded-lg">
                                     {songItems.map((obj, idx) => (

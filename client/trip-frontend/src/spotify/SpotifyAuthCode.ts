@@ -12,7 +12,11 @@ export const SpotifyAuthCode = async (code: string) => {
     const loginUrl = `${serverURL}/api/spotify/login`;
     // Call the server to login with the authorization code
     const response = await axios.post<AuthResponse>(loginUrl, { code });
-    return response.data.accessToken;
+    return {
+        accessToken: response.data.accessToken,
+        refreshToken: response.data.refreshToken,
+        expiresIn: response.data.expiresIn
+    };
 
     // TODO add expires access token
     // useEffect(() => {
