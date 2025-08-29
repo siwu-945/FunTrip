@@ -34,8 +34,9 @@ export default function initSockets(httpServer: HTTPServer) {
         // return current song queue of the room
         io.to(roomId).emit("getCurrentSongStream", [...rooms[roomId].getSongStream])
 
-        // return currnet song playing time
-        io.to(roomId).emit("currentProgress", rooms[roomId].getCurrentProgress);
+        // return current song playing progress
+        const progress = rooms[roomId].getCurrentProgress();
+        io.to(roomId).emit("progressSync", progress);
     }
 
     const updateCurrentSongQueue = (newSongs : SongObj[], roomId : string) => {
@@ -149,24 +150,144 @@ export default function initSockets(httpServer: HTTPServer) {
             }
         })
 
+        socket.on("clearQueue", ({roomId, username} : {roomId : string, username : string}) => {
+            if (!rooms[roomId]) {
+                console.error("No such room exist");
+                return;
+            }
+            
+            // Check if user is host
+            if (rooms[roomId].hostID !== username) {
+                return;
+            }
+            
+            console.log("Clear Queue request from host:", username, "for room:", roomId);
+            
+            // Clear the queue
+            const clearedQueue = rooms[roomId].clearQueue();
+            
+            console.log("Current song stream after clearing:", {
+                songsCount: clearedQueue.length,
+                songs: clearedQueue.map(s => s.spotifyData.track?.name)
+            });
+            
+            // Update all clients in the room
+            updateCurrentSongQueue(clearedQueue, roomId);
+        })
+
+        socket.on("deleteSong", ({roomId, username, songIndex} : {roomId : string, username : string, songIndex : number}) => {
+            if (!rooms[roomId]) {
+                console.error("No such room exist");
+                return;
+            }
+            
+            // Check if user is host
+            if (rooms[roomId].hostID !== username) {
+                console.error("User is not host, cannot delete song");
+                socket.emit('deleteSongError', { message: 'Only the host can delete songs' });
+                return;
+            }
+            
+            console.log("Delete Song request from host:", username, "for room:", roomId, "songIndex:", songIndex);
+            
+            // Delete the song
+            const updatedQueue = rooms[roomId].deleteSong(songIndex);
+            
+            console.log("Current song stream after deletion:", {
+                songsCount: updatedQueue.length,
+                songs: updatedQueue.map(s => s.spotifyData.track?.name)
+            });
+            
+            // Update all clients in the room
+            updateCurrentSongQueue(updatedQueue, roomId);
+        })
+
+        socket.on("updateSongIndex", ({roomId, songIndex} : {roomId : string, songIndex : number}) => {           
+            // Update the current song index
+            rooms[roomId].updateCurrentSongIndex(songIndex);
+            
+            io.to(roomId).emit("songIndexUpdated", {
+                songIndex: songIndex,
+                songName: rooms[roomId].getSongStream[songIndex]?.spotifyData.track?.name
+            });
+        })
+
+        socket.on("startPlayback", ({roomId} : {roomId : string}) => {
+            
+            console.log("Start playback request for room:", roomId);
+            
+            // Start playback tracking
+            rooms[roomId].startSongPlayback();
+            
+            io.to(roomId).emit("playbackStarted", rooms[roomId].getCurrentProgress());
+        })
+
+        socket.on("pausePlayback", ({roomId} : {roomId : string}) => {
+            if (!rooms[roomId]) {
+                console.error("No such room exist");
+                return;
+            }
+            
+            console.log("Pause playback request for room:", roomId);
+            
+            // Pause playback tracking
+            rooms[roomId].pauseSongPlayback();
+            
+            io.to(roomId).emit("playbackPaused", rooms[roomId].getCurrentProgress());
+        })
+
+        socket.on("requestProgressSync", ({roomId} : {roomId : string}) => {
+            if (!rooms[roomId]) {
+                console.error("No such room exist");
+                return;
+            }
+                        
+            // Send current progress to the requesting client
+            const progress = rooms[roomId].getCurrentProgress();
+            socket.emit("progressSync", progress);
+            
+            console.log("Sent progress sync:", {
+                roomId,
+                currentSongIndex: progress.currentSongIndex,
+                currentTime: progress.currentTime,
+                isPaused: progress.isPaused
+            });
+        })
+
+        socket.on("reorderQueue", ({roomId, username, newOrder} : {roomId : string, username : string, newOrder: SpotifyApi.PlaylistTrackObject[]}) => {
+            if (!rooms[roomId]) {
+                console.error("No such room exist");
+                return;
+            }
+            
+            console.log("Reorder Queue request from user:", username, "for room:", roomId);
+            
+            // Reorder the queue
+            const reorderedQueue = rooms[roomId].reorderQueue(newOrder);
+            
+            console.log("Current song stream after reordering:", {
+                songsCount: reorderedQueue.length,
+                songs: reorderedQueue.map(s => s.spotifyData.track?.name)
+            });
+            
+            // Update all clients in the room
+            updateCurrentSongQueue(reorderedQueue, roomId);
+        })
+
         socket.on("pauseAndPlayEvent", ({roomId, isPaused, progressTime} : {roomId : string, isPaused : boolean, progressTime : number}) => {
             if(isPaused == null || !rooms[roomId]) return;
 
             console.log("progressTime: ", progressTime, " isPaused: ", isPaused);
-            rooms[roomId].isPaused = isPaused;
-
+            
             if(isPaused){
-                rooms[roomId].pasuedAt = Date.now() - rooms[roomId].startedAt;
+                rooms[roomId].pauseSongPlayback();
+                io.to(roomId).emit("playbackPaused", rooms[roomId].getCurrentProgress());
             }else{
-                rooms[roomId].startedAt = Date.now() - rooms[roomId].pasuedAt;
-                rooms[roomId].pasuedAt = 0;
+                rooms[roomId].startSongPlayback();
+                io.to(roomId).emit("playbackStarted", rooms[roomId].getCurrentProgress());
             }
-            socket.to(roomId).emit("currentProgress", {
-                isPaused: rooms[roomId].isPaused,
-                pausedAt: rooms[roomId].pasuedAt,
-                startedAt: rooms[roomId].startedAt
-            });
-            socket.to(roomId).emit('updatePlayingStatus', isPaused);
+            
+            io.to(roomId).emit('updatePlayingStatus', isPaused);
         })
 
         socket.on("changeRoomType", ({roomId, isParty} : {roomId : string, isParty : boolean}) => {

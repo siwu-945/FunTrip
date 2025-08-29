@@ -58,6 +58,7 @@ export type AudioPlayerProps = {
     socket: Socket,
     roomId : string,
     partyMode:boolean;
+    onCurrentSongChange?: (index: number) => void;
 }
 
 export type ToggleProps = {

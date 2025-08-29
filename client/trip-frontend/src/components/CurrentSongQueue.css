@@ -1,0 +1,139 @@
+.current-song-playing {
+    background: white;
+    position: relative;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.current-song-playing::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(to right, #86efac, #4ade80, #22c55e);
+    border-radius: 0 0 4px 4px;
+}
+
+.sortable-item {
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.sortable-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+.sortable-item:active {
+    cursor: grabbing;
+}
+
+.sortable-item.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.grip-handle {
+    cursor: grab;
+    color: #9ca3af;
+    transition: color 0.2s ease;
+}
+
+.grip-handle:hover {
+    color: #6b7280;
+}
+
+.grip-handle:active {
+    cursor: grabbing;
+    color: #4b5563;
+}
+
+.sortable-item:hover .delete-button {
+    opacity: 1;
+}
+
+.delete-button {
+    transition: color 0.2s ease-in-out, text-shadow 0.2s ease-in-out !important;
+    font-weight: 300 !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    background: none !important;
+    border: none !important;
+    outline: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    position: absolute !important;
+    top: 50% !important;
+    right: 12px !important;
+    transform: translateY(-50%) !important;
+    color: #6b7280 !important;
+}
+
+.delete-button:hover:not(:disabled) {
+    color: #000000 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+    background: none !important;
+    border: none !important;
+    outline: none !important;
+    transform: translateY(-50%) !important;
+    border-color: transparent !important;
+}
+
+.delete-button:active:not(:disabled) {
+    animation: shake 0.5s ease-in-out !important;
+}
+
+.delete-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.delete-button:focus,
+.delete-button:focus-visible {
+    outline: none !important;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    transform: translateY(-50%) !important;
+}
+
+/* Ensure no movement on any hover state */
+.delete-button:hover,
+.delete-button:active,
+.delete-button:focus {
+    transform: translateY(-50%) !important;
+    top: 50% !important;
+    right: 12px !important;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateY(-50%) translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateY(-50%) translateX(-2px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateY(-50%) translateX(2px);
+    }
+}
+
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
