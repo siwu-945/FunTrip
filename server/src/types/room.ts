@@ -74,14 +74,10 @@ export class RoomInfo{
         return this.songStream;
     }
 
-    public reorderQueue(newOrder: SpotifyApi.PlaylistTrackObject[]) {
+    public reorderQueue(newOrder: SongObj[]) {
         console.log("Songs before reordering:", this.songStream.length);
         
-        const newSongStream: SongObj[] = newOrder.map((track) => ({
-            spotifyData: track,
-        }));
-        
-        this.songStream = newSongStream;
+        this.songStream = [...newOrder];
         console.log("Songs after reordering:", this.songStream.length);
         return this.songStream;
     }

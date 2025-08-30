@@ -45,7 +45,8 @@ export default function initSockets(httpServer: HTTPServer) {
 
     const addSongToStream = (roomID : string, selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         const newSongs = rooms[roomID].addSongToStream(selectedTracks);
-        updateCurrentSongQueue(newSongs, roomID)
+        // Send the entire updated queue
+        updateCurrentSongQueue(rooms[roomID].getSongStream, roomID)
     };
 
     const removeSongFromStream = () => {
@@ -254,7 +255,7 @@ export default function initSockets(httpServer: HTTPServer) {
             });
         })
 
-        socket.on("reorderQueue", ({roomId, username, newOrder} : {roomId : string, username : string, newOrder: SpotifyApi.PlaylistTrackObject[]}) => {
+        socket.on("reorderQueue", ({roomId, username, newOrder} : {roomId : string, username : string, newOrder: SongObj[]}) => {
             if (!rooms[roomId]) {
                 console.error("No such room exist");
                 return;

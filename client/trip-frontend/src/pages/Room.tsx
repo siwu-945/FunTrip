@@ -48,7 +48,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             // Playlist management
             socket.on("updateSongStream", (songStream: SongObj[]) => {
                 console.log("Song stream updated: ", songStream);
-                setCurrentQueue((prev) => [...prev, ...songStream])
+                setCurrentQueue(songStream)
                 resetDeleteState(); 
             })
             socket.on("getCurrentSongStream", (songStream: SongObj[]) => {
@@ -152,7 +152,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         socket.emit("reorderQueue", { 
             roomId, 
             username: currentUser,
-            newOrder: newOrder.map(song => song.spotifyData)
+            newOrder: newOrder
         });
     };
 
