@@ -30,6 +30,7 @@ interface CurrentSongQueueProps {
     onReorderQueue: (newOrder: SongObj[]) => void;
     onDeleteSong: (songIndex: number) => void;
     isDeletingSong: boolean;
+    onLongPress: (songIndex: number, songName: string) => void;
 }
 
 interface SortableSongItemProps {
@@ -107,12 +108,7 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
         <li
             ref={setNodeRef}
             style={style}
-            {...attributes}
-            {...listeners}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            className={`sortable-item text-gray-700 py-2 px-3 rounded-lg shadow-sm transition-all duration-200 cursor-move group relative ${
+            className={`sortable-item text-gray-700 py-2 px-3 rounded-lg shadow-sm transition-all duration-200 group relative ${
                 index === currentSongIndex 
                     ? 'current-song-playing' 
                     : 'bg-white hover:bg-gray-50'
@@ -120,8 +116,20 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
-                    <i className="fas fa-grip-vertical text-gray-400 text-xs"></i>
-                    <div className="flex-1">
+                    {/* 6-dots drag handle */}
+                    <div
+                        {...attributes}
+                        {...listeners}
+                        className="drag-handle cursor-grab active:cursor-grabbing"
+                        onMouseDown={handleMouseDown}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseLeave}
+                    >
+                        <i className="fas fa-grip-vertical text-gray-400 text-xs"></i>
+                    </div>
+                    
+                    {/* Song info */}
+                    <div className="flex-1 pointer-events-none">
                         <div className="font-medium text-gray-800 flex items-center gap-2">
                             {song.spotifyData.track?.name || ""}
                             {index === currentSongIndex && (
@@ -175,7 +183,8 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
     onClearQueue,
     onReorderQueue,
     onDeleteSong,
-    isDeletingSong
+    isDeletingSong,
+    onLongPress
 }) => {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);

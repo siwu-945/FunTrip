@@ -20,6 +20,8 @@
     transition: all 0.2s ease;
     border: 1px solid transparent;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    user-select: none;
+    touch-action: pan-y;
 }
 
 .sortable-item:hover {
@@ -38,17 +40,23 @@
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.grip-handle {
+/* Drag handle styles */
+.drag-handle {
     cursor: grab;
     color: #9ca3af;
     transition: color 0.2s ease;
+    padding: 4px;
+    border-radius: 4px;
+    touch-action: none;
+    user-select: none;
 }
 
-.grip-handle:hover {
+.drag-handle:hover {
     color: #6b7280;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
-.grip-handle:active {
+.drag-handle:active {
     cursor: grabbing;
     color: #4b5563;
 }
