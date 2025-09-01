@@ -19,12 +19,16 @@
 .sortable-item {
     transition: all 0.2s ease;
     border: 1px solid transparent;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    user-select: none;
+    touch-action: pan-y;
+    position: relative;
+    overflow: hidden;
 }
 
 .sortable-item:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     border-color: rgba(0, 0, 0, 0.05);
 }
 
@@ -38,100 +42,79 @@
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.grip-handle {
+.delete-background {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(to right, #ef4444, #dc2626);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 20px;
+    font-weight: 600;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.delete-background.visible {
+    opacity: 1;
+}
+
+.song-content-wrapper {
+    position: relative;
+    z-index: 2;
+    background: white;
+    transition: transform 0.2s ease;
+}
+
+.drag-handle {
     cursor: grab;
     color: #9ca3af;
     transition: color 0.2s ease;
+    padding: 4px;
+    border-radius: 4px;
+    touch-action: none;
+    user-select: none;
 }
 
-.grip-handle:hover {
+.drag-handle:hover {
     color: #6b7280;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
-.grip-handle:active {
+.drag-handle:active {
     cursor: grabbing;
     color: #4b5563;
 }
 
-.sortable-item:hover .delete-button {
-    opacity: 1;
+/* Right side area for swipe detection */
+.swipe-area {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 50%;
+    z-index: 3;
+    cursor: grab;
 }
 
-.delete-button {
-    transition: color 0.2s ease-in-out, text-shadow 0.2s ease-in-out !important;
-    font-weight: 300 !important;
-    font-size: 18px !important;
-    line-height: 1 !important;
-    background: none !important;
-    border: none !important;
-    outline: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    position: absolute !important;
-    top: 50% !important;
-    right: 12px !important;
-    transform: translateY(-50%) !important;
-    color: #6b7280 !important;
-}
-
-.delete-button:hover:not(:disabled) {
-    color: #000000 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-    background: none !important;
-    border: none !important;
-    outline: none !important;
-    transform: translateY(-50%) !important;
-    border-color: transparent !important;
-}
-
-.delete-button:active:not(:disabled) {
-    animation: shake 0.5s ease-in-out !important;
-}
-
-.delete-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.delete-button:focus,
-.delete-button:focus-visible {
-    outline: none !important;
-    border: none !important;
-    background: none !important;
-    box-shadow: none !important;
-    transform: translateY(-50%) !important;
-}
-
-/* Ensure no movement on any hover state */
-.delete-button:hover,
-.delete-button:active,
-.delete-button:focus {
-    transform: translateY(-50%) !important;
-    top: 50% !important;
-    right: 12px !important;
+.swipe-area:active {
+    cursor: grabbing;
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 @keyframes shake {
-    0%, 100% {
-        transform: translateY(-50%) translateX(0);
-    }
-    10%, 30%, 50%, 70%, 90% {
-        transform: translateY(-50%) translateX(-2px);
-    }
-    20%, 40%, 60%, 80% {
-        transform: translateY(-50%) translateX(2px);
-    }
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateY(-50%) translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateY(-50%) translateX(2px); }
 }
 
 .fa-spinner {
