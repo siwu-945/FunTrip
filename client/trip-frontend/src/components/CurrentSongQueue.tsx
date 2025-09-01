@@ -39,7 +39,6 @@ interface SortableSongItemProps {
     isHost: boolean;
     onDeleteSong: (songIndex: number) => void;
     isDeletingSong: boolean;
-    onLongPress: (songIndex: number, songName: string) => void;
 }
 
 const SortableSongItem: React.FC<SortableSongItemProps> = ({ 
@@ -48,8 +47,7 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
     currentSongIndex, 
     isHost, 
     onDeleteSong, 
-    isDeletingSong,
-    onLongPress 
+    isDeletingSong
 }) => {
     const {
         attributes,
@@ -66,108 +64,165 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
         opacity: isDragging ? 0.5 : 1,
     };
 
-    // Long press functionality
-    const longPressTimerRef = useRef<number | null>(null);
-    const [isLongPressing, setIsLongPressing] = useState(false);
+    // Swipe to delete functionality
+    const [isSwiping, setIsSwiping] = useState(false);
+    const [swipeOffset, setSwipeOffset] = useState(0);
+    const [showDeleteBackground, setShowDeleteBackground] = useState(false);
+    const swipeStartXRef = useRef<number>(0);
+    const itemRef = useRef<HTMLLIElement>(null);
 
-    const handleMouseDown = () => {
+    const handleSwipeStart = (clientX: number) => {
         if (!isHost) return;
+        setIsSwiping(true);
+        swipeStartXRef.current = clientX;
+        setSwipeOffset(0);
+    };
+
+    const handleSwipeMove = (clientX: number) => {
+        if (!isSwiping || !isHost) return;
         
-        longPressTimerRef.current = setTimeout(() => {
-            setIsLongPressing(true);
-            onLongPress(index, song.spotifyData.track?.name || "");
-        }, 1500);
+        const deltaX = clientX - swipeStartXRef.current;
+        // Only allow leftward direction
+        if (deltaX > 0) return;
+        
+        setSwipeOffset(deltaX);
+        
+        // Show delete background when swiped beyond 30% of item width
+        if (itemRef.current) {
+            const itemWidth = itemRef.current.offsetWidth;
+            const swipePercentage = Math.abs(deltaX) / itemWidth;
+            setShowDeleteBackground(swipePercentage > 0.3);
+        }
+    };
+
+    const handleSwipeEnd = () => {
+        if (!isSwiping || !isHost) return;
+        
+        setIsSwiping(false);
+        
+        // Delete song if swiped beyond 60% of item width
+        if (itemRef.current && Math.abs(swipeOffset) > itemRef.current.offsetWidth * 0.6) {
+            if (!isDeletingSong) {
+                onDeleteSong(index);
+            }
+        }
+        
+        // Reset swipe state if release
+        setSwipeOffset(0);
+        setShowDeleteBackground(false);
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        handleSwipeStart(e.touches[0].clientX);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        handleSwipeMove(e.touches[0].clientX);
+    };
+
+    const handleTouchEnd = () => {
+        handleSwipeEnd();
+    };
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        // Only handle right half of the song item
+        if (e.currentTarget.getBoundingClientRect().width / 2 > e.nativeEvent.offsetX) {
+            return;
+        }
+        handleSwipeStart(e.clientX);
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isSwiping) {
+            handleSwipeMove(e.clientX);
+        }
     };
 
     const handleMouseUp = () => {
-        if (longPressTimerRef.current) {
-            clearTimeout(longPressTimerRef.current);
-            longPressTimerRef.current = null;
+        if (isSwiping) {
+            handleSwipeEnd();
         }
-        setIsLongPressing(false);
     };
 
     const handleMouseLeave = () => {
-        if (longPressTimerRef.current) {
-            clearTimeout(longPressTimerRef.current);
-            longPressTimerRef.current = null;
+        if (isSwiping) {
+            handleSwipeEnd();
         }
-        setIsLongPressing(false);
     };
-
-    useEffect(() => {
-        return () => {
-            if (longPressTimerRef.current) {
-                clearTimeout(longPressTimerRef.current);
-            }
-        };
-    }, []);
 
     return (
         <li
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            className={`sortable-item text-gray-700 py-2 px-3 rounded-lg shadow-sm transition-all duration-200 cursor-move group relative ${
+            ref={(node) => {
+                setNodeRef(node);
+                if (node) itemRef.current = node;
+            }}
+            style={{
+                ...style,
+                transform: `${style.transform} translateX(${swipeOffset}px)`,
+            }}
+            className={`sortable-item text-gray-700 py-2 px-3 rounded-lg shadow-sm transition-all duration-200 group relative ${
                 index === currentSongIndex 
                     ? 'current-song-playing' 
                     : 'bg-white hover:bg-gray-50'
-            } ${isLongPressing ? 'scale-95' : ''}`}
+            }`}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
         >
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                    <i className="fas fa-grip-vertical text-gray-400 text-xs"></i>
-                    <div className="flex-1">
-                        <div className="font-medium text-gray-800 flex items-center gap-2">
-                            {song.spotifyData.track?.name || ""}
-                            {index === currentSongIndex && (
-                                <span className="text-green-600">
-                                    <i className="fas fa-play"></i>
-                                </span>
-                            )}
+            {/* Delete background */}
+            <div className={`delete-background ${showDeleteBackground ? 'visible' : ''}`}>
+                <span>Delete</span>
+            </div>
+
+            {/* Song content wrapper */}
+            <div 
+                className="song-content-wrapper"
+                style={{ transform: `translateX(${swipeOffset}px)` }}
+            >
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1">
+                        {/* 6-dots drag handle */}
+                        <div
+                            {...attributes}
+                            {...listeners}
+                            className="drag-handle cursor-grab active:cursor-grabbing"
+                        >
+                            <i className="fas fa-grip-vertical text-gray-400 text-xs"></i>
                         </div>
-                        <div className="text-sm text-gray-500">
-                            {song.spotifyData.track?.artists?.[0]?.name || ""}
+                        
+                        {/* Song info */}
+                        <div className="flex-1 pointer-events-none">
+                            <div className="font-medium text-gray-800 flex items-center gap-2">
+                                {song.spotifyData.track?.name || ""}
+                                {index === currentSongIndex && (
+                                    <span className="text-green-600">
+                                        <i className="fas fa-play"></i>
+                                    </span>
+                                )}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                                {song.spotifyData.track?.artists?.[0]?.name || ""}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            {/* Delete only visible to host on hover */}
+
+            {/* Swipe area */}
             {isHost && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isDeletingSong) {
-                            console.log("Deleting song:", {
-                                index,
-                                songName: song.spotifyData.track?.name
-                            });
-                            onDeleteSong(index);
-                        }
-                    }}
-                    disabled={isDeletingSong}
-                    className={`delete-button opacity-0 group-hover:opacity-100 
-                             cursor-pointer
-                             ${isDeletingSong ? 'cursor-not-allowed' : ''}`}
-                    title={isDeletingSong ? "Deleting..." : "Delete song"}
-                >
-                    {isDeletingSong ? (
-                        <i className="fas fa-spinner fa-spin text-sm"></i>
-                    ) : (
-                        <span className="text-lg font-light">−</span>
-                    )}
-                </button>
+                <div
+                    className="swipe-area"
+                    onMouseDown={handleMouseDown}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchEnd}
+                />
             )}
         </li>
     );
 };
 
-// TODO update the song names with actual added songs
 const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({ 
     songs, 
     currentSongIndex, 
@@ -179,24 +234,11 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
 }) => {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedSongIndex, setSelectedSongIndex] = useState<number>(-1);
-    const [selectedSongName, setSelectedSongName] = useState<string>("");
-
-    const handleLongPress = (songIndex: number, songName: string) => {
-        setSelectedSongIndex(songIndex);
-        setSelectedSongName(songName);
-        setIsModalOpen(true);
-    };
-
-    const handleRemoveSong = () => {
-        if (selectedSongIndex >= 0) {
-            onDeleteSong(selectedSongIndex);
-        }
-    };
 
     const handleRemoveAll = () => {
         onClearQueue();
     };
+
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -224,6 +266,20 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
 
     return (
         <div className="bg-gray-100 rounded-md mt-2 w-full flex flex-col h-[60vh]">
+            {/* Header with recycle bin icon */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-800">Song Queue</h3>
+                {isHost && songs.length > 0 && (
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="text-gray-500 hover:text-red-500 transition-colors duration-200"
+                        title="Clear all songs"
+                    >
+                        <i className="fas fa-trash-alt"></i>
+                    </button>
+                )}
+            </div>
+            
             <div className="flex-1 p-4 overflow-y-auto">
                 {songs.length > 0 ? (
                     <DndContext
@@ -245,7 +301,6 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
                                         isHost={isHost}
                                         onDeleteSong={onDeleteSong}
                                         isDeletingSong={isDeletingSong}
-                                        onLongPress={handleLongPress}
                                     />
                                 ))}
                             </ul>
@@ -263,8 +318,8 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
             <SongRemoveModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                selectedSongName={selectedSongName}
-                onRemoveSong={handleRemoveSong}
+                selectedSongName={""}
+                onRemoveSong={() => {}} // Empty function since we're only using remove all
                 onRemoveAll={handleRemoveAll}
             />
         </div>

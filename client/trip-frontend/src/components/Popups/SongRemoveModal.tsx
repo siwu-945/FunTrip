@@ -24,8 +24,8 @@ const SongRemoveModal: React.FC<SongRemoveModalProps> = ({
                 <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-4 rounded-t-lg">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center">
-                            <i className="fas fa-search text-white mr-2"></i>
-                            <span className="text-lg font-semibold text-white">Remove Song</span>
+                            <i className="fas fa-trash-alt text-white mr-2"></i>
+                            <span className="text-lg font-semibold text-white">Clear Playlist</span>
                         </div>
                         <button
                             onClick={onClose}
@@ -39,28 +39,25 @@ const SongRemoveModal: React.FC<SongRemoveModalProps> = ({
                 {/* Content */}
                 <div className="p-6">
                     <div className="space-y-4">
-                        <button
-                            onClick={() => {
-                                onRemoveSong();
-                                onClose();
-                            }}
-                            className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-orange-300 transition-all duration-200"
-                        >
-                            <div>
-                                <div className="font-medium text-gray-800">Remove "{selectedSongName}"</div>
-                            </div>
-                        </button>
+                        <p className="text-gray-600 text-center mb-4">
+                            Are you sure you want to clear the entire playlist?
+                        </p>
                         
                         <button
                             onClick={() => {
                                 onRemoveAll();
                                 onClose();
                             }}
-                            className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-orange-300 transition-all duration-200"
+                            className="w-full px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-medium"
                         >
-                            <div>
-                                <div className="font-medium text-gray-800">Clear entire playlist</div>
-                            </div>
+                            Clear Entire Playlist
+                        </button>
+                        
+                        <button
+                            onClick={onClose}
+                            className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium"
+                        >
+                            Cancel
                         </button>
                     </div>
                 </div>
