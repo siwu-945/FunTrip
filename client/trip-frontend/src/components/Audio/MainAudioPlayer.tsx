@@ -298,12 +298,12 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, curren
                         </span>
                     </p>
                     {/* Sync indicator */}
-                    <div className="flex items-center gap-2 mt-1">
+                    {/* <div className="flex items-center gap-2 mt-1">
                         <div className={`w-2 h-2 rounded-full ${isSynced ? 'bg-green-500' : 'bg-yellow-500'} animate-pulse`}></div>
                         <span className="text-xs text-gray-500">
                             {isSynced ? 'Synced' : 'Syncing...'}
                         </span>
-                    </div>
+                    </div> */}
                 </div>
             </div>
 

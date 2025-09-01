@@ -216,6 +216,7 @@ export default function initSockets(httpServer: HTTPServer) {
 
         socket.on("updateSongIndex", ({roomId, songIndex} : {roomId : string, songIndex : number}) => {           
             // Update the current song index
+            if(!rooms[roomId]) return;
             rooms[roomId].updateCurrentSongIndex(songIndex);
 
             io.to(roomId).emit("songIndexUpdated", {
