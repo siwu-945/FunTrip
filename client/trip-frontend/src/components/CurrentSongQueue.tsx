@@ -61,8 +61,7 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
+        transition: isDragging ? 'none' : transition,
     };
 
     // Swipe to delete functionality
@@ -114,42 +113,55 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
     };
 
     const handleTouchStart = (e: React.TouchEvent) => {
-        handleSwipeStart(e.touches[0].clientX);
+        if (!isDragging) {
+            handleSwipeStart(e.touches[0].clientX);
+        }
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
-        handleSwipeMove(e.touches[0].clientX);
+        if (!isDragging) {
+            handleSwipeMove(e.touches[0].clientX);
+        }
     };
 
     const handleTouchEnd = () => {
-        handleSwipeEnd();
+        if (!isDragging) {
+            handleSwipeEnd();
+        }
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
-        // Only handle right half of the song item
-        if (e.currentTarget.getBoundingClientRect().width / 2 > e.nativeEvent.offsetX) {
-            return;
+        if (!isDragging && e.currentTarget.getBoundingClientRect().width / 2 < e.nativeEvent.offsetX) {
+            handleSwipeStart(e.clientX);
         }
-        handleSwipeStart(e.clientX);
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (isSwiping) {
+        if (isSwiping && !isDragging) {
             handleSwipeMove(e.clientX);
         }
     };
 
     const handleMouseUp = () => {
-        if (isSwiping) {
+        if (isSwiping && !isDragging) {
             handleSwipeEnd();
         }
     };
 
     const handleMouseLeave = () => {
-        if (isSwiping) {
+        if (isSwiping && !isDragging) {
             handleSwipeEnd();
         }
     };
+
+    // Reset swipe when dragging starts
+    useEffect(() => {
+        if (isDragging && (isSwiping || swipeOffset !== 0)) {
+            setIsSwiping(false);
+            setSwipeOffset(0);
+            setShowDeleteBackground(false);
+        }
+    }, [isDragging, isSwiping, swipeOffset]);
 
     return (
         <li
@@ -157,11 +169,9 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
                 setNodeRef(node);
                 if (node) itemRef.current = node;
             }}
-            style={{
-                ...style,
-                transform: `${style.transform} translateX(${swipeOffset}px)`,
-            }}
-            className={`sortable-item text-gray-700 py-2 px-3 rounded-lg shadow-sm transition-all duration-200 group relative ${
+            style={style}
+            data-dragging={isDragging}
+            className={`sortable-item text-gray-700 py-2 px-3 rounded-lg shadow-sm group relative ${
                 index === currentSongIndex 
                     ? 'current-song-playing' 
                     : 'bg-white hover:bg-gray-50'
@@ -170,28 +180,27 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
         >
-            {/* Delete background */}
             <div className={`delete-background ${showDeleteBackground ? 'visible' : ''}`}>
                 <span>Delete</span>
             </div>
 
-            {/* Song content wrapper */}
             <div 
                 className="song-content-wrapper"
-                style={{ transform: `translateX(${swipeOffset}px)` }}
+                style={{ 
+                    transform: `translateX(${swipeOffset}px)`,
+                    background: index === currentSongIndex ? 'white' : 'inherit'
+                }}
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
-                        {/* 6-dots drag handle */}
                         <div
                             {...attributes}
                             {...listeners}
-                            className="drag-handle cursor-grab active:cursor-grabbing"
+                            className="drag-handle"
                         >
-                            <i className="fas fa-grip-vertical text-gray-400 text-xs"></i>
+                            <i className="fas fa-grip-vertical text-xs"></i>
                         </div>
                         
-                        {/* Song info */}
                         <div className="flex-1 pointer-events-none">
                             <div className="font-medium text-gray-800 flex items-center gap-2">
                                 {song.spotifyData.track?.name || ""}
@@ -209,7 +218,6 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
                 </div>
             </div>
 
-            {/* Swipe area */}
             {isHost && (
                 <div
                     className="swipe-area"
