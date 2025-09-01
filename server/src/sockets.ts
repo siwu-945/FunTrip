@@ -31,12 +31,18 @@ export default function initSockets(httpServer: HTTPServer) {
      * Playlist management
      */
     const getCurrentSongsInfo = (roomId : string) => {
+        const songIdx = rooms[roomId].currentSongIndex;
         // return current song queue of the room
         io.to(roomId).emit("getCurrentSongStream", [...rooms[roomId].getSongStream])
 
         // return current song playing progress
         const progress = rooms[roomId].getCurrentProgress();
         io.to(roomId).emit("progressSync", progress);
+
+        io.to(roomId).emit("songIndexUpdated", {
+            songIndex: songIdx,
+            songName: rooms[roomId].getSongStream[songIdx]?.spotifyData.track?.name
+        });
     }
 
     const updateCurrentSongQueue = (newSongs : SongObj[], roomId : string) => {
@@ -98,8 +104,13 @@ export default function initSockets(httpServer: HTTPServer) {
     
     io.on('connection', (socket) => {
         socket.on('userRejoined', ({roomId, username} : {roomId:string; username:string}) =>{
+            const songIdx = rooms[roomId].currentSongIndex;
             socket.join(roomId)
             io.to(roomId).emit("getCurrentSongStream", [...rooms[roomId].getSongStream])
+            io.to(roomId).emit("songIndexUpdated", {
+                songIndex: songIdx,
+                songName: rooms[roomId].getSongStream[songIdx]?.spotifyData.track?.name
+            });
         })
         // separate create and join
         socket.on('joinRoom', ({roomId, username, action, password}: {roomId: string; username: string; action: 'create' | 'join'; password?: string}) => {
@@ -206,7 +217,7 @@ export default function initSockets(httpServer: HTTPServer) {
         socket.on("updateSongIndex", ({roomId, songIndex} : {roomId : string, songIndex : number}) => {           
             // Update the current song index
             rooms[roomId].updateCurrentSongIndex(songIndex);
-            
+
             io.to(roomId).emit("songIndexUpdated", {
                 songIndex: songIndex,
                 songName: rooms[roomId].getSongStream[songIndex]?.spotifyData.track?.name

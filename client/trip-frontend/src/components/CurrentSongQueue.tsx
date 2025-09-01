@@ -30,6 +30,7 @@ interface CurrentSongQueueProps {
     onReorderQueue: (newOrder: SongObj[]) => void;
     onDeleteSong: (songIndex: number) => void;
     isDeletingSong: boolean;
+    setCurrentIndex: (idx: number) => void;
 }
 
 interface SortableSongItemProps {
@@ -170,12 +171,13 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
 // TODO update the song names with actual added songs
 const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({ 
     songs, 
-    currentSongIndex, 
+    currentSongIndex,
     isHost, 
     onClearQueue,
     onReorderQueue,
     onDeleteSong,
-    isDeletingSong
+    isDeletingSong,
+    setCurrentIndex,
 }) => {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -205,22 +207,42 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
     );
 
     const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
+    const { active, over } = event;
 
-        if (active.id !== over?.id) {
-            const oldIndex = Number(active.id);
-            const newIndex = Number(over?.id);
-            
-            console.log("Reordering songs:", {
-                fromIndex: oldIndex,
-                toIndex: newIndex,
-                songName: songs[oldIndex]?.spotifyData.track?.name
-            });
-            
-            const newOrder = arrayMove(songs, oldIndex, newIndex);
-            onReorderQueue(newOrder);
+    if (active.id !== over?.id) {
+        const oldIndex = Number(active.id);
+        const newIndex = Number(over?.id);
+        
+        console.log("Reordering songs:", {
+            fromIndex: oldIndex,
+            toIndex: newIndex,
+            currentSongIndex: currentSongIndex,
+            songName: songs[oldIndex]?.spotifyData.track?.name
+        });
+        
+        const newOrder = arrayMove(songs, oldIndex, newIndex);
+        
+        // Calculate the new current song index after reordering
+        let newCurrentIndex = currentSongIndex;
+        
+        if (currentSongIndex === oldIndex) {
+            // The currently playing song was moved
+            newCurrentIndex = newIndex;
+            console.log("Currently playing song moved to:", newIndex);
+        } else if (oldIndex < currentSongIndex && newIndex >= currentSongIndex) {
+            // A song before the current song was moved to after it
+            newCurrentIndex = currentSongIndex - 1;
+            console.log("Song moved from before to after current, new index:", newCurrentIndex);
+        } else if (oldIndex > currentSongIndex && newIndex <= currentSongIndex) {
+            // A song after the current song was moved to before it
+            newCurrentIndex = currentSongIndex + 1;
+            console.log("Song moved from after to before current, new index:", newCurrentIndex);
         }
-    };
+        // If none of the above conditions are met, currentSongIndex stays the same
+        setCurrentIndex(newCurrentIndex);
+        onReorderQueue(newOrder);
+    }
+};
 
     return (
         <div className="bg-gray-100 rounded-md mt-2 w-full flex flex-col h-[60vh]">

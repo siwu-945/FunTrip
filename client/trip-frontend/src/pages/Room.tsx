@@ -23,8 +23,9 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
     const [messages, setMessages] = useState<Message[]>([]);
     const [isParty, setIsParty] = useState(true);
     const [isHost, setIsHost] = useState<boolean>(true);
-    const [currentSongIndex, setCurrentSongIndex] = useState<number>(0);
     const [isDeletingSong, setIsDeletingSong] = useState<boolean>(false);
+    const [currentIndex, setCurrentIndex] = useState(0);
+
     const deleteTimeoutRef = useRef<number | null>(null);
 
     const resetDeleteState = () => {
@@ -35,6 +36,12 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         }
     };
 
+    useEffect(() => {
+        if(socket){
+            socket.emit("updateSongIndex", { roomId, songIndex: currentIndex });
+        }
+    }, [currentIndex])
+    
     useEffect(() => {
         if (socket) {
             const savedSession = getSavedUserSession()
@@ -47,12 +54,10 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             }
             // Playlist management
             socket.on("updateSongStream", (songStream: SongObj[]) => {
-                console.log("Song stream updated: ", songStream);
                 setCurrentQueue(songStream)
                 resetDeleteState(); 
             })
             socket.on("getCurrentSongStream", (songStream: SongObj[]) => {
-                console.log("Current song stream: ", songStream);
                 setCurrentQueue(songStream)
                 resetDeleteState(); 
             })
@@ -61,6 +66,9 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             socket.on("updatePlayingStatus", (audioStatus: boolean) => {
                 setPlayStatus(audioStatus)
             })
+            socket.on("songIndexUpdated", ({songIndex}) => {
+                setCurrentIndex(songIndex)
+            });
 
             // Listen for incoming messages
             socket.on('receiveMessage', (message: Message) => {
@@ -80,16 +88,6 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 console.error("Delete song error:", error.message);
                 resetDeleteState(); 
             });
-
-            socket.on('progressSync', (progress: { currentSongIndex: number, currentTime: number, isPaused: boolean }) => {
-                console.log("Room received progress sync:", progress);
-                setCurrentSongIndex(progress.currentSongIndex);
-            });
-
-            socket.on('songIndexUpdated', ({ songIndex, songName }: { songIndex: number, songName: string }) => {
-                setCurrentSongIndex(songIndex);
-            });
-
         }
         return () => {
             if (socket) {
@@ -133,13 +131,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         socket.emit("addSongToStream", { selectedTracks, roomId })
     };
 
-    const handleClearQueue = () => {
-        console.log("Current song stream before clearing:", {
-            songsCount: currentQueue.length,
-            songs: currentQueue.map(s => s.spotifyData.track?.name),
-            currentSongIndex
-        });
-        
+    const handleClearQueue = () => { 
         socket.emit("clearQueue", { roomId, username: currentUser });
     };
 
@@ -303,7 +295,8 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                         socket={socket} 
                         roomId={roomId} 
                         partyMode={isParty}
-                        onCurrentSongChange={setCurrentSongIndex}
+                        currentIndex={currentIndex}
+                        setCurrentIndex={setCurrentIndex}
                     />
                     :
                     <GuestAudioPlayer />
@@ -311,12 +304,13 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 <FunctionBar handleAddToQueue={handleAddToQueue} roomId={roomId} saveCurrentUserSession={saveCurrentUserSession}/>
                 <CurrentSongQueue 
                     songs={currentQueue} 
-                    currentSongIndex={currentSongIndex} 
+                    currentSongIndex={currentIndex} 
                     isHost={isHost}
                     onClearQueue={handleClearQueue}
                     onReorderQueue={handleReorderQueue}
                     onDeleteSong={handleDeleteSong}
                     isDeletingSong={isDeletingSong}
+                    setCurrentIndex={setCurrentIndex}
                 />
             </div>
         )

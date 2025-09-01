@@ -5,18 +5,30 @@ import { AudioPlayerProps, DownloadResponse, SongObj } from "../../types";
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
-const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurrentSongChange }) => {
+const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, currentIndex, setCurrentIndex }) => {
     const [currentAudioUrl, setCurrentAudioUrl] = useState("")
-    const [currentIndex, setCurrentIndex] = useState(0);
     const [progressTime, setProgressTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
-    const [currentSongIndex, setCurrentSongIndex] = useState<number>(0);
     const [isSynced, setIsSynced] = useState(false);
 
     const [populatedSongInfo, setPopulatedSongInfo] = useState([]);
     const audioRef = useRef(null);
+
+    useEffect(() => {
+        if (socket) {
+            const handleSongIndexUpdated = ({ songIndex }: { songIndex: number; songName?: string }) => {
+                setCurrentIndex(songIndex);
+            };
+
+            socket.on("songIndexUpdated", handleSongIndexUpdated);
+
+            return () => {
+                socket.off("songIndexUpdated", handleSongIndexUpdated);
+            };
+        }
+    }, [socket, populatedSongInfo]);
 
     useEffect(() => {
         if (socket && roomId && songs.length > 0) {
@@ -27,49 +39,21 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
     useEffect(() => {
         if (!socket) return;
 
-        const handleProgressSync = (progress) => {
-            console.log("Received progress sync:", progress);
-            
-            if (progress.currentSongIndex !== currentIndex) {
-                setCurrentIndex(progress.currentSongIndex);
-                onCurrentSongChange?.(progress.currentSongIndex);
-            }
-            
-            if (progress.currentTime > 0) {
-                console.log("Syncing to time:", progress.currentTime);
-                setProgressTime(progress.currentTime / 1000); // Convert to seconds
-            }
-            
-            setIsSynced(true);
-        };
-
-        const handleSongIndexUpdated = ({ songIndex, songName }) => {
-            setCurrentIndex(songIndex);
-            onCurrentSongChange?.(songIndex);
-        };
-
         const handlePlaybackStarted = (progress) => {
-            console.log("Playback started:", progress);
             setIsPlaying(true);
         };
 
         const handlePlaybackPaused = (progress) => {
-            console.log("Playback paused:", progress);
             setIsPlaying(false);
         };
-
-        socket.on("progressSync", handleProgressSync);
-        socket.on("songIndexUpdated", handleSongIndexUpdated);
         socket.on("playbackStarted", handlePlaybackStarted);
         socket.on("playbackPaused", handlePlaybackPaused);
 
         return () => {
-            socket.off("progressSync", handleProgressSync);
-            socket.off("songIndexUpdated", handleSongIndexUpdated);
             socket.off("playbackStarted", handlePlaybackStarted);
             socket.off("playbackPaused", handlePlaybackPaused);
         };
-    }, [socket, currentIndex, onCurrentSongChange]);
+    }, [socket, currentIndex]);
 
     // TODO: retrival should be done in the backend
     const retrieveAudio = async (songIndex) => {
@@ -87,37 +71,19 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
         }
     };
 
-    const trackSongStartTime = () => {
-        // Your existing implementation
-    };
-
-    const updateSongIndex = () => {
-        // Your existing implementation
-    };
-
-    const updateSongProgressTime = () => {
-        // Your existing implementation
-    };
-
     const handleFirstSong = async () => {
         // make sure we are not overriding the first playing song when new songs are added
         if (audioRef.current !== null && !audioRef.current.paused) {
             return;
         }
 
-        if (!partyMode) {
-            updateSongIndex();
-            updateSongProgressTime();
-        }
-
         const firstAudio = await retrieveAudio(currentIndex);
         setCurrentAudioUrl(firstAudio);
-        
+
         // set the synced progress time
         if (audioRef.current && progressTime > 0) {
             audioRef.current.currentTime = progressTime;
         }
-        trackSongStartTime();
     }
 
     const handleNext = async () => {
@@ -126,6 +92,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
             console.log("index out of range, song len: " + songs.length)
             return;
         }
+
         const nextSongIdx = currentIndex + 1;
         let audioUrl = populatedSongInfo[nextSongIdx]?.audioUrl;
 
@@ -136,13 +103,12 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
         }
         setCurrentAudioUrl(audioUrl);
         setCurrentIndex(nextSongIdx);
-        
+
         // send song index change to backend
         if (socket && roomId) {
             socket.emit("updateSongIndex", { roomId, songIndex: nextSongIdx });
         }
-        
-        trackSongStartTime();
+
         if (audioRef.current) {
             audioRef.current.currentTime = 0;
         }
@@ -153,6 +119,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
             console.log("Already at first song");
             return;
         }
+
         const prevSongIdx = currentIndex - 1;
         let audioUrl = populatedSongInfo[prevSongIdx]?.audioUrl;
 
@@ -162,12 +129,11 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
         }
         setCurrentAudioUrl(audioUrl);
         setCurrentIndex(prevSongIdx);
-        
+
         if (socket && roomId) {
             socket.emit("updateSongIndex", { roomId, songIndex: prevSongIdx });
         }
-        
-        trackSongStartTime();
+
         if (audioRef.current) {
             audioRef.current.currentTime = 0;
         }
@@ -294,32 +260,15 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
         setCurrentTime(newTime);                          // Update state
     };
 
-    const getCurrentSong = () => songs[currentIndex];
-    const currentSong = getCurrentSong();
-    useEffect(() => {
-        if (songs.length > 0 && currentSongIndex < songs.length) {
-            // Notify parent component about current song change
-            if (onCurrentSongChange) {
-                onCurrentSongChange(currentSongIndex);
-            }
-        }
-    }, [currentSongIndex, songs, onCurrentSongChange]);
-
-    // Notify parent when current index changes
-    useEffect(() => {
-        if (onCurrentSongChange) {
-            onCurrentSongChange(currentIndex);
-        }
-    }, [currentIndex, onCurrentSongChange]);
     return (
         <section className="p-6 bg-[#F8F8F6] relative">
             <div className="flex items-center gap-4">
                 {/* Album Art with Animation */}
                 <div className="relative">
                     <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg">
-                        {currentSong?.spotifyData?.track?.album?.images?.[0] ? (
+                        {songs[currentIndex]?.spotifyData?.track?.album?.images?.[0] ? (
                             <img
-                                src={currentSong.spotifyData.track.album.images[0].url}
+                                src={songs[currentIndex].spotifyData.track.album.images[0].url}
                                 alt="Album art"
                                 className="w-full h-full object-cover rounded-xl"
                             />
@@ -340,12 +289,12 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
                 <div className="flex-1 min-w-0">
                     <h2 className="text-lg sm:text-xl font-bold text-gray-800 leading-tight">
                         <span className="block truncate sm:whitespace-normal sm:break-words">
-                            {currentSong?.spotifyData?.track?.name || 'No song selected'}
+                            {songs[currentIndex]?.spotifyData?.track?.name || 'No song selected'}
                         </span>
                     </h2>
                     <p className="text-purple-600 font-medium text-sm sm:text-base">
                         <span className="block truncate sm:whitespace-normal sm:break-words">
-                            {currentSong?.spotifyData?.track?.artists?.[0]?.name || 'Unknown artist'}
+                            {songs[currentIndex]?.spotifyData?.track?.artists?.[0]?.name || 'Unknown artist'}
                         </span>
                     </p>
                     {/* Sync indicator */}
@@ -385,7 +334,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
                         <div className="w-[2px] h-4 bg-current ml-1"></div>
                         <FaPlay className="text-sm rotate-180" />
 
-                    </span> 
+                    </span>
                 </button>
 
                 <button
@@ -402,7 +351,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, onCurr
                     <span className="flex items-center">
                         <FaPlay className="text-sm" />
                         <div className="w-[2px] h-4 bg-current ml-1"></div>
-                    </span>                
+                    </span>
                 </button>
             </div>
 
