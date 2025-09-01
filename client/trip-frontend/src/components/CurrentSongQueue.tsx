@@ -82,7 +82,7 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
         if (!isSwiping || !isHost) return;
         
         const deltaX = clientX - swipeStartXRef.current;
-        // Only allow leftward swiping (negative deltaX)
+        // Only allow leftward direction
         if (deltaX > 0) return;
         
         setSwipeOffset(deltaX);
@@ -100,19 +100,18 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
         
         setIsSwiping(false);
         
-        // Delete song if swiped beyond 50% of item width
-        if (itemRef.current && Math.abs(swipeOffset) > itemRef.current.offsetWidth * 0.5) {
+        // Delete song if swiped beyond 60% of item width
+        if (itemRef.current && Math.abs(swipeOffset) > itemRef.current.offsetWidth * 0.6) {
             if (!isDeletingSong) {
                 onDeleteSong(index);
             }
         }
         
-        // Reset swipe state
+        // Reset swipe state if release
         setSwipeOffset(0);
         setShowDeleteBackground(false);
     };
 
-    // Touch event handlers
     const handleTouchStart = (e: React.TouchEvent) => {
         handleSwipeStart(e.touches[0].clientX);
     };
@@ -125,7 +124,6 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
         handleSwipeEnd();
     };
 
-    // Mouse event handlers
     const handleMouseDown = (e: React.MouseEvent) => {
         // Only handle right half of the song item
         if (e.currentTarget.getBoundingClientRect().width / 2 > e.nativeEvent.offsetX) {
@@ -210,7 +208,7 @@ const SortableSongItem: React.FC<SortableSongItemProps> = ({
                 </div>
             </div>
 
-            {/* Swipe area (right half) */}
+            {/* Swipe area */}
             {isHost && (
                 <div
                     className="swipe-area"
