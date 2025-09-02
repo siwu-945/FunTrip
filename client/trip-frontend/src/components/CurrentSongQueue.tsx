@@ -31,6 +31,7 @@ interface CurrentSongQueueProps {
     onDeleteSong: (songIndex: number) => void;
     isDeletingSong: boolean;
     setCurrentIndex: (idx: number) => void;
+    JoinedUsers: React.ReactNode;
 }
 
 interface SortableSongItemProps {
@@ -241,6 +242,7 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
     onDeleteSong,
     isDeletingSong,
     setCurrentIndex,
+    JoinedUsers
 }) => {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -295,9 +297,10 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
 };
 
     return (
-        <div className="bg-gray-100 rounded-md mt-2 w-full flex flex-col h-[60vh]">
+        <div className="bg-[#f1f0f0] rounded-xl shadow-lg mt-4 mx-4 mb-4 flex flex-col h-[60vh] border border-gray-200/50">
+        {/* // <div className="bg-gray-100 rounded-md mt-2 w-full flex flex-col h-[60vh]"> */}
             {/* Header with recycle bin icon */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            {/* <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <h3 className="font-semibold text-gray-800">Song Queue</h3>
                 {isHost && songs.length > 0 && (
                     <button
@@ -308,9 +311,10 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
                         <i className="fas fa-trash-alt"></i>
                     </button>
                 )}
-            </div>
+            </div> */}
+            {JoinedUsers}
             
-            <div className="flex-1 p-4 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
                 {songs.length > 0 ? (
                     <DndContext
                         sensors={sensors}

@@ -32,6 +32,7 @@ export const Home = () => {
     const [joinRoomId, setJoinRoomId] = useState('');
     const [joinUserName, setJoinUserName] = useState('');
     const [joinPasswordError, setJoinPasswordError] = useState('');
+    const [selectedAvatarIndex, setSelectedAvatarIndex] = useState(0);
 
     // Emit joinRoom event when user tries to create or join room.
     const handleJoinRoom = async (action: 'create' | 'join') => {
@@ -59,7 +60,7 @@ export const Home = () => {
                 setShowJoinPasswordModal(true);
             } else {
                 if (socket) {
-                    socket.emit("joinRoom", {roomId, username: userName, action});
+                    socket.emit("joinRoom", {roomId, username: userName, action, selectedAvatarIndex});
                 }
                 setUserJoined(true);
             }
@@ -84,7 +85,7 @@ export const Home = () => {
             return;
         }
         if (socket) {
-            socket.emit("joinRoom", {roomId, username: userName, action: 'create', password: roomPassword});
+            socket.emit("joinRoom", {roomId, username: userName, action: 'create', password: roomPassword, selectedAvatarIndex});
         }
         setUserJoined(true);
         setShowPasswordModal(false);
@@ -141,25 +142,6 @@ export const Home = () => {
         };
     }, [socket]);
 
-    // useEffect(() => {
-    //     if (userJoined && socket) {
-    //         socket.on("userJoined", (updatedUsers: User[]) => {
-    //             setJoinedUsers(updatedUsers);
-    //         });
-    //         socket.on("userLeft", (updatedUsers: User[]) => {
-    //             setJoinedUsers(updatedUsers);
-    //         });
-    //     }
-
-    //     // Cleanup listeners on unmount or if userJoined/socket changes
-    //     return () => {
-    //         if (socket) {
-    //             socket.off("userJoined");
-    //             socket.off("userLeft");
-    //         }
-    //     };
-    // }, [userJoined, socket]);
-
     return (
         <div className="w-screen h-screen">
             {/* If user not joined, show Welcome Page
@@ -171,6 +153,8 @@ export const Home = () => {
                         roomId={roomId}
                         setRoomId={setRoomId}
                         handleJoinRoom={handleJoinRoom}
+                        selectedAvatarIdx={selectedAvatarIndex}
+                        setSelectedAvatarIdx={setSelectedAvatarIndex}
                     />) :(
                     <Room 
                         socket={socket} 
@@ -178,6 +162,7 @@ export const Home = () => {
                         roomId={roomId} 
                         setUserJoined={setUserJoined}
                         currentUser={userName}
+                        avatarIdx={selectedAvatarIndex}
                     />
             )}
             {/* TODO Update Modal for more Error Messages */
@@ -221,7 +206,8 @@ export const Home = () => {
                                     roomId: joinRoomId, 
                                     username: joinUserName, 
                                     action: 'join', 
-                                    password: joinPassword 
+                                    password: joinPassword,
+                                    avatarIdx: selectedAvatarIndex
                                 });
                             }
                             setUserJoined(true);

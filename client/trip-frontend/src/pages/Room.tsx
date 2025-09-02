@@ -17,7 +17,7 @@ const serverURL = import.meta.env.VITE_SERVER_URL;
 const SESSION_KEY = 'spotify_room_session';
 const SESSION_EXPIRY_HOURS = 2;
 
-export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser }) => {
+export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoined, currentUser, avatarIdx}) => {
     const [playStatus, setPlayStatus] = useState(false);
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -35,6 +35,12 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             deleteTimeoutRef.current = null;
         }
     };
+
+    useEffect(() => {
+        if(socket && currentQueue.length == 0){
+            socket.emit("userRejoined", { roomId: roomId });
+        }
+    }, [])
 
     useEffect(() => {
         if(socket){
@@ -311,6 +317,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     onDeleteSong={handleDeleteSong}
                     isDeletingSong={isDeletingSong}
                     setCurrentIndex={setCurrentIndex}
+                    JoinedUsers ={<JoinedUsers roomName={roomId} socket={socket} setUserJoined={setUserJoined} currentUser={currentUser} messages={formattedMessages} avatarIdx={avatarIdx}/>}
                 />
             </div>
         )
