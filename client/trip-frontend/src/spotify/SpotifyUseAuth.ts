@@ -38,7 +38,6 @@ export const useAuth = () => {
 
     // exchange auth code for access token
     useEffect(() => {
-        console.log("auth code changed")
         const fetchAccessToken = async () => {
             try {
                 if (authCode && !accessToken) {
