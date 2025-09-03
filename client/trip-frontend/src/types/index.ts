@@ -41,6 +41,7 @@ export interface RoomComponentProps {
     roomId: string;
     setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
     currentUser: string;
+    avatarIdx: number;
 }
 
 export type SongObj = {
@@ -103,4 +104,9 @@ export interface RoomHeaderProps {
 export interface UserSession{
     roomId: string;
     username: string;
+}
+
+export interface UserProfilProps{
+    username: string;
+    pfpIndex: number;
 }

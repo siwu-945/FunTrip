@@ -74,14 +74,14 @@ export default function initSockets(httpServer: HTTPServer) {
         socket.join(roomId);
     }
 
-    const addUserToRoom = (socketId : string, roomId : string, username : string) => {
+    const addUserToRoom = (socketId : string, roomId : string, username : string, avatarIdx :number) => {
         const room = rooms[roomId];
 
         if(room.userExist(username)){
             promptChangeUserName();
         }
 
-        const newUser = new User(socketId, username)
+        const newUser = new User(socketId, username, avatarIdx)
         if (!room.hostID){
             newUser.isHost = true;
             room.hostID = username;
@@ -113,7 +113,7 @@ export default function initSockets(httpServer: HTTPServer) {
             });
         })
         // separate create and join
-        socket.on('joinRoom', ({roomId, username, action, password}: {roomId: string; username: string; action: 'create' | 'join'; password?: string}) => {
+        socket.on('joinRoom', ({roomId, username, action, password, avatarIdx}: {roomId: string; username: string; action: 'create' | 'join'; password?: string, avatarIdx : number}) => {
             if (action === 'create') {
                 if (roomExist(roomId)) {
                     socket.emit('roomError', { message: 'Room ID already in use. Please choose another.' });
@@ -126,7 +126,7 @@ export default function initSockets(httpServer: HTTPServer) {
                 }
             }
             createAndJoinRoom(roomId, socket, password);
-            addUserToRoom(socket.id, roomId, username);
+            addUserToRoom(socket.id, roomId, username, avatarIdx);
             getCurrentSongsInfo(roomId);
             
             io.to(roomId).emit('joinRoom', roomId);

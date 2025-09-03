@@ -261,7 +261,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, curren
     };
 
     return (
-        <section className="p-6 bg-[#F8F8F6] relative">
+        <section className="pt-4 pl-6 pr-6 pb-6 bg-[#F8F8F6] relative">
             <div className="flex items-center gap-4">
                 {/* Album Art with Animation */}
                 <div className="relative">

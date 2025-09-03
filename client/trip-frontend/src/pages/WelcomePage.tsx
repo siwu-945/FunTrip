@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import "../assets/WelcomePage.css";
 import SimpleToggle from "../components/Popups/SimpleToggle";
+import AvatarSelections from "../components/Users/AvatarSelections";
+import { avatarImages } from "../components/Users/AvatarImages";
 
 interface UserInfoProps {
     username: string;
@@ -8,13 +10,14 @@ interface UserInfoProps {
     roomId: string;
     setRoomId: (roomId: string) => void;
     handleJoinRoom: (action: 'create' | 'join') => void;
+    selectedAvatarIdx: number;
+    setSelectedAvatarIdx: (idx: number) => void;
 }
 
-const WelcomePage: React.FC<UserInfoProps> = ({ username, setUsername, roomId, setRoomId, handleJoinRoom }) => {
+const WelcomePage: React.FC<UserInfoProps> = ({ username, setUsername, roomId, setRoomId, handleJoinRoom, selectedAvatarIdx, setSelectedAvatarIdx}) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     // Add state for your toggles
     const [partyMode, setPartyMode] = useState(true);
-
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
@@ -119,7 +122,6 @@ const WelcomePage: React.FC<UserInfoProps> = ({ username, setUsername, roomId, s
                             className="w-72 p-4 rounded-xl shadow-md bg-[#FEFEFA] border-none text-gray-800"
                         />
                     </div>
-
                     <div>
                         <label className="block text-lg font-semibold mb-3 text-shadow">
                             <i className="fas fa-key mr-2 text-blue-500"></i>Room Code
@@ -131,6 +133,7 @@ const WelcomePage: React.FC<UserInfoProps> = ({ username, setUsername, roomId, s
                             className="w-72 p-4 rounded-xl shadow-md bg-[#FEFEFA] border-none text-gray-800"
                         />
                     </div>
+                    <AvatarSelections selectedAvatarIdx={selectedAvatarIdx} setSelectedAvatarIdx={setSelectedAvatarIdx}/>
 
                     <div className="pt-4">
                         <div className="flex justify-between items-center mb-6">
