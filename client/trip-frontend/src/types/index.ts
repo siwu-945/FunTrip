@@ -110,3 +110,24 @@ export interface UserProfilProps{
     username: string;
     pfpIndex: number;
 }
+
+export interface FormattedMessage {
+    type: 'date' | 'message';
+    content: string;
+}
+
+export interface JoinedUsersProps {
+    roomName: string;
+    socket: Socket;
+    setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
+    messages: FormattedMessage[];
+    currentUser: string;
+    avatarIdx: number;
+}
+
+export interface User {
+    socketId : string;
+    username : string;
+    isHost : boolean;
+    avatarIdx : number;
+}

@@ -1,8 +1,9 @@
 import girl1 from '../../assets/avatars/girl1.svg';
-import woman1 from '../../assets/avatars/girl1.svg';
+import woman1 from '../../assets/avatars/woman1.svg';
 import man1 from '../../assets/avatars/man1.svg';
 import man2 from '../../assets/avatars/man2.svg';
 import boy1 from '../../assets/avatars/boy1.svg';
+import man3 from '../../assets/avatars/man3.svg';
 
 export const bgColors = [
     'bg-gradient-to-br from-teal-400 to-teal-600',
@@ -21,5 +22,6 @@ export const avatarImages = [
     boy1,
     girl1,
     woman1,
+    man3
 ];
 

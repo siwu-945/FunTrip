@@ -44,6 +44,8 @@ export const Home = () => {
         // joining a room
         setCookie("username", userName, {expires: 7, path: "/"});
         setCookie("roomId", roomId, {expires: 7, path: "/"});
+        setCookie("avatarIdx", `${selectedAvatarIndex}`, {expires: 7, path: "/"});
+
 
         if (!userName.trim() || !roomId.trim()) {
             alert("Please enter a valid username and room ID!");

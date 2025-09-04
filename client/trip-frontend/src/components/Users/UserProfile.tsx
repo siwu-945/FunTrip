@@ -4,7 +4,7 @@ import { avatarImages, bgColors} from "./AvatarImages";
 
 const UserProfile: React.FC<UserProfilProps> = ({ username, pfpIndex }) => {
     const colorClass = bgColors[pfpIndex % bgColors.length];
-    const initial = username.charAt(0).toUpperCase();
+    const initial = username;
 
     return (
         <div className={`w-10 h-10 rounded-full shadow-md overflow-hidden relative ${colorClass}`}>

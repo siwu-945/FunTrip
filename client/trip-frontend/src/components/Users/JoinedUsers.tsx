@@ -4,38 +4,27 @@ import { getCookie, removeCookie } from "../../tools/Cookies";
 const serverURL = import.meta.env.VITE_SERVER_URL;
 import axios from "axios";
 import UserProfile from "./UserProfile";
+import { JoinedUsersProps, User, FormattedMessage} from "../../types";
 
-interface FormattedMessage {
-    type: 'date' | 'message';
-    content: string;
-}
-
-interface JoinedUsersProps {
-    roomName: string;
-    socket: Socket;
-    setUserJoined: React.Dispatch<React.SetStateAction<boolean>>;
-    messages: FormattedMessage[];
-    currentUser: string;
-    avatarIdx: number;
-}
 
 const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoined, currentUser, messages, avatarIdx}) => {
 
-    const [joinedUser, setJoinedUsers] = useState<string[]>([]);
+    const [joinedUser, setJoinedUsers] = useState<User[]>([]);
     const [hostName, setHostName] = useState<string>("");
 
     useEffect(() => {
         const savedUserName = getCookie("username");
         const savedRoomId = getCookie("roomId");
-        socket.emit("joinRoom", { roomId: savedRoomId, username: savedUserName });
+        const savedIdx = getCookie("avatarIdx");
+        socket.emit("joinRoom", { roomId: savedRoomId, username: savedUserName, avatarIdx: parseInt(savedIdx, 10) });
     }, []);
 
     useEffect(() => {
         if (socket) {
-            socket.on("userJoined", (updatedUserNames: string[]) => {
+            socket.on("userJoined", (updatedUserNames: User[]) => {
                 setJoinedUsers(updatedUserNames);
             });
-            socket.on("userLeft", (updatedUserNames: string[]) => {
+            socket.on("userLeft", (updatedUserNames: User[]) => {
                 setJoinedUsers(updatedUserNames);
             });
         }
@@ -75,18 +64,18 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
             </div>
 
             <div className="flex items-center gap-3 overflow-x-auto pb-1">
-                {joinedUser.map((username, idx) => (
+                {joinedUser.map((user, idx) => (
                     <div
                         key={idx}
                         className="flex-shrink-0 group"
-                        title={`${username}${username === hostName ? ' (Host)' : ''}${username === currentUser ? ' (You)' : ''}`}
+                        title={`${user[1].username}${user[1].username === hostName ? ' (Host)' : ''}${user[1].username === currentUser ? ' (You)' : ''}`}
                     >
                         {/* User Card */}
                         <div className={`flex flex-col items-center space-y-1 p-2 rounded-lg transition-all duration-200 min-w-[50px]`}>
                             {/* Profile Picture with Host Badge */}
                             <div className="relative">
-                                <UserProfile username={currentUser} pfpIndex={avatarIdx}/>
-                                {username === hostName && (
+                                <UserProfile username={user[1].username} pfpIndex={user[1].avatarIdx}/>
+                                {user[1].username === hostName && (
                                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
                                         <span className="text-yellow-800 text-xs">★</span>
                                     </div>
@@ -95,9 +84,9 @@ const JoinedUsers: React.FC<JoinedUsersProps> = ({ roomName, socket, setUserJoin
 
                             {/* Username */}
                             <div className="text-center">
-                                <span className={`text-xs font-medium block truncate max-w-[60px] ${username === currentUser ? "text-orange-700" : "text-gray-700"
+                                <span className={`text-xs font-medium block truncate max-w-[60px] ${user[1].username === currentUser ? "text-orange-700" : "text-gray-700"
                                     }`}>
-                                    {username}
+                                    {user[1].username}
                                 </span>
                             </div>
 

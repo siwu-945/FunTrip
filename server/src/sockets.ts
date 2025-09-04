@@ -99,7 +99,7 @@ export default function initSockets(httpServer: HTTPServer) {
 
     const disconnectUserFromRoom = (roomId : string, username : string, io : Server ) => {
         rooms[roomId].removeUser(username);
-        io.emit("userLeft", [...rooms[roomId].getUsers.keys()]);
+        io.emit("userLeft", [...rooms[roomId].getUsers]);
     }
     
     io.on('connection', (socket) => {
@@ -130,7 +130,7 @@ export default function initSockets(httpServer: HTTPServer) {
             getCurrentSongsInfo(roomId);
             
             io.to(roomId).emit('joinRoom', roomId);
-            io.to(roomId).emit('userJoined', [...rooms[roomId].getUsers.keys()]);
+            io.to(roomId).emit('userJoined', [...rooms[roomId].getUsers]);
     
             socket.on("disconnect", () => {
                 disconnectUserFromRoom(roomId, username, io);
