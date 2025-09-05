@@ -12,7 +12,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
     return (
         <div
             className={`border-b border-gray-200 pt-4 pr-5 pb-4 pl-5 flex justify-between items-center bg-gradient-to-r
-    ${isParty ? 'from-[#F8F8F6] to-[#F8F8F6]' : 'from-pink-200 to-purple-300'}`}
+    ${isParty ? 'from-[#f8f8eb] to-[#f8f8eb]' : 'from-pink-200 to-purple-300'}`}
         >
             {/* Left side - Room info */}
             <div className="flex-1">
