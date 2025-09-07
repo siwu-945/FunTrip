@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaStepForward, FaStepBackward, FaPlay, FaPause } from "react-icons/fa";
 import axios from "axios";
-import { AudioPlayerProps, DownloadResponse, SongObj } from "../../types";
+import { AudioPlayerProps, DownloadResponse, SongObj, AudioUrlResponse } from "../../types";
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
@@ -46,28 +46,72 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, curren
         const handlePlaybackPaused = (progress) => {
             setIsPlaying(false);
         };
+
+        const handleAudioUrlUpdated = ({ songIndex, audioUrl }) => {
+            setPopulatedSongInfo(prev => {
+                const updated = [...prev];
+                if (updated[songIndex] && !updated[songIndex].audioUrl) {
+                    updated[songIndex] = { ...updated[songIndex], audioUrl };
+                }
+                return updated;
+            });
+        };
+
         socket.on("playbackStarted", handlePlaybackStarted);
         socket.on("playbackPaused", handlePlaybackPaused);
+        socket.on("audioUrlUpdated", handleAudioUrlUpdated);
 
         return () => {
             socket.off("playbackStarted", handlePlaybackStarted);
             socket.off("playbackPaused", handlePlaybackPaused);
+            socket.off("audioUrlUpdated", handleAudioUrlUpdated);
         };
-    }, [socket, currentIndex]);
+    }, [socket]);
 
-    // TODO: retrival should be done in the backend
+    // Get audio URL from backend cache or download if not cached
     const retrieveAudio = async (songIndex) => {
         try {
-            // Call the server to download the song
-            const downloadedSong = await axios.post<DownloadResponse>(`${serverURL}/download-song`, { 'song': songs[songIndex]?.spotifyData.track?.name })
-            return downloadedSong.data.audiolink;
-        } catch {
+            // handle caching
+            const response = await axios.post<AudioUrlResponse>(`${serverURL}/room/${roomId}/song/${songIndex}/audio`);
+            return response.data.audioUrl;
+        } catch (error) {
+            console.error('Failed to get audio URL:', error);
             window.dispatchEvent(
                 new CustomEvent("modalError", {
                     detail: { message: "Fail to find the song, try remove the current song and re-add it" },
                 })
             );
             return null;
+        }
+    };
+
+    // Pre-load the next 3 songs
+    const preloadNextSongs = async (currentSongIndex) => {
+        const songsToPreload = [];
+        
+        for (let i = 1; i <= 3; i++) {
+            const nextSongIndex = currentSongIndex + i;
+            if (nextSongIndex < songs.length && !populatedSongInfo[nextSongIndex]?.audioUrl) {
+                songsToPreload.push(nextSongIndex);
+            }
+        }
+        
+        for (const songIndex of songsToPreload) {
+            try {
+                console.log(`Pre-loading song: ${songIndex}`);
+                const response = await axios.post<AudioUrlResponse>(`${serverURL}/room/${roomId}/song/${songIndex}/audio`);
+                if (response.data.audioUrl) {
+                    setPopulatedSongInfo(prev => {
+                        const updated = [...prev];
+                        if (!updated[songIndex]?.audioUrl) {
+                            updated[songIndex] = { ...updated[songIndex], audioUrl: response.data.audioUrl };
+                        }
+                        return updated;
+                    });
+                }
+            } catch (error) {
+                console.error(`Failed to pre-load song ${songIndex}:`, error);
+            }
         }
     };
 
@@ -84,6 +128,8 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, curren
         if (audioRef.current && progressTime > 0) {
             audioRef.current.currentTime = progressTime;
         }
+
+        preloadNextSongs(currentIndex);
     }
 
     const handleNext = async () => {
@@ -112,6 +158,8 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, curren
         if (audioRef.current) {
             audioRef.current.currentTime = 0;
         }
+
+        preloadNextSongs(nextSongIdx);
     };
 
     const handlePrevious = async () => {
@@ -137,6 +185,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, curren
         if (audioRef.current) {
             audioRef.current.currentTime = 0;
         }
+        preloadNextSongs(prevSongIdx);
     };
 
     const togglePlay = () => {
@@ -175,24 +224,34 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, curren
         }
 
         const fetchAudioUrls = async () => {
-            const updatedSongs = await Promise.all(
-                songs.map(async (song) => {
-                    if (!song.audioUrl) {
-                        // Call the server to download the song
-                        const url = await axios
-                            .post<DownloadResponse>(`${serverURL}/download-song`, {
-                                song: song.spotifyData.track?.name,
-                            })
-                            .then((res) => res.data.audiolink)
-                            .catch(() => null);
+            // Initialize with copying existing songs
+            const updatedSongs = songs.map((song) => ({
+                ...song,
+                audioUrl: song.audioUrl
+            }));
 
-                        return { ...song, audioUrl: url };
+            setPopulatedSongInfo(updatedSongs);
+            
+            // Pre-fetch audio urls for the first 3 songs
+            const songsToPreFetch = Math.min(3, songs.length);
+            for (let i = 0; i < songsToPreFetch; i++) {
+                if (!updatedSongs[i].audioUrl) {
+                    try {
+                        const response = await axios.post<AudioUrlResponse>(`${serverURL}/room/${roomId}/song/${i}/audio`);
+                        if (response.data.audioUrl) {
+                            setPopulatedSongInfo(prev => {
+                                const updated = [...prev];
+                                if (!updated[i].audioUrl) { 
+                                    updated[i] = { ...updated[i], audioUrl: response.data.audioUrl };
+                                }
+                                return updated;
+                            });
+                        }
+                    } catch (error) {
+                        console.error(`Failed to pre-fetch audio for song ${i}:`, error);
                     }
-                    return song;
-                })
-            );
-
-            setPopulatedSongInfo(updatedSongs)
+                }
+            }
         }
         fetchAudioUrls();
     }, [songs]);
