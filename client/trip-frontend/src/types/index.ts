@@ -53,6 +53,11 @@ export type DownloadResponse = {
     audiolink: string;
 }
 
+export type AudioUrlResponse = {
+    audioUrl: string;
+    cached: boolean;
+}
+
 export type AudioPlayerProps = {
     songs: SongObj[], 
     audioPaused: boolean,

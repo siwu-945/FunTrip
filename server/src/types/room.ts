@@ -15,6 +15,7 @@ export class RoomInfo{
 
     private users: Map<string, User>;
     private songStream: SongObj[];
+    private downloadingSongs: Set<number>;
 
     public constructor(roomID:string, password?:string){
         this.roomID = roomID;
@@ -24,6 +25,7 @@ export class RoomInfo{
         this.requiresPassword = !!password;
         this.songStream = [];
         this.password = password || "";
+        this.downloadingSongs = new Set<number>();
 
         this.isPaused = false;
         this.isParty = true;
@@ -58,6 +60,7 @@ export class RoomInfo{
     public addSongToStream(selectedTracks: SpotifyApi.PlaylistTrackObject[]){
         const songObjs : SongObj[] = selectedTracks.map((track) => ({
             spotifyData : track,
+            audioUrl: undefined
         }));
         this.songStream.push(...songObjs);
         return songObjs;
@@ -65,6 +68,32 @@ export class RoomInfo{
 
     public get getSongStream() : SongObj[]{
         return this.songStream;
+    }
+
+    public getSongAudioUrl(songIndex: number): string | undefined {
+        if (songIndex >= 0 && songIndex < this.songStream.length) {
+            return this.songStream[songIndex].audioUrl;
+        }
+        return undefined;
+    }
+
+    public setSongAudioUrl(songIndex: number, audioUrl: string): void {
+        if (songIndex >= 0 && songIndex < this.songStream.length) {
+            this.songStream[songIndex].audioUrl = audioUrl;
+            this.downloadingSongs.delete(songIndex);
+        }
+    }
+
+    public isSongDownloading(songIndex: number): boolean {
+        return this.downloadingSongs.has(songIndex);
+    }
+
+    public markSongAsDownloading(songIndex: number): void {
+        this.downloadingSongs.add(songIndex);
+    }
+
+    public removeSongFromDownloading(songIndex: number): void {
+        this.downloadingSongs.delete(songIndex);
     }
 
     public clearQueue() {

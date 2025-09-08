@@ -7,7 +7,7 @@ import { SongObj } from './types';
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 export const rooms: Record<string, RoomInfo> = {};
 
-export default function initSockets(httpServer: HTTPServer) {
+export default function initSockets(httpServer: HTTPServer): Server {
     const io = new Server(httpServer, {
         cors: {
             origin: CLIENT_URL,
@@ -317,4 +317,6 @@ export default function initSockets(httpServer: HTTPServer) {
             io.to(roomId).emit('receiveMessage', message);
         });
     });
+    
+    return io;
 }
