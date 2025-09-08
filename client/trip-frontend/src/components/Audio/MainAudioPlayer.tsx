@@ -5,7 +5,7 @@ import { AudioPlayerProps, DownloadResponse, SongObj } from "../../types";
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
-const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, currentIndex, setCurrentIndex }) => {
+const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, setCurrentIndex }) => {
     const [currentAudioUrl, setCurrentAudioUrl] = useState("")
     const [progressTime, setProgressTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -265,7 +265,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, curren
             <div className="flex items-center gap-4">
                 {/* Album Art with Animation */}
                 <div className="relative">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg">
+                    <div className="w-20 h-20 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg">
                         {songs[currentIndex]?.spotifyData?.track?.album?.images?.[0] ? (
                             <img
                                 src={songs[currentIndex].spotifyData.track.album.images[0].url}
@@ -273,12 +273,12 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, partyMode, curren
                                 className="w-full h-full object-cover rounded-xl"
                             />
                         ) : (
-                            '🎭'
+                            '🎹'
                         )}
                     </div>
                     {/* Pulse ring for currently playing */}
                     {isPlaying && (
-                        <div className="absolute inset-0 rounded-xl bg-purple-400/30 animate-pulse"></div>
+                        <div className="absolute inset-0 rounded-xl animate-pulse"></div>
                     )}
                     {/* Live indicator */}
                     <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">

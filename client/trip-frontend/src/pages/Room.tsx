@@ -299,12 +299,18 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                     audioPaused={playStatus}
                     socket={socket}
                     roomId={roomId}
-                    partyMode={isParty}
                     currentIndex={currentIndex}
                     setCurrentIndex={setCurrentIndex}
                 />
                 :
-                <GuestAudioPlayer />
+                <GuestAudioPlayer 
+                    songs={currentQueue}
+                    audioPaused={playStatus}
+                    socket={socket}
+                    roomId={roomId}
+                    currentIndex={currentIndex}
+                    setCurrentIndex={setCurrentIndex}
+                />
             }
             <FunctionBar handleAddToQueue={handleAddToQueue} roomId={roomId} saveCurrentUserSession={saveCurrentUserSession} />
             <CurrentSongQueue

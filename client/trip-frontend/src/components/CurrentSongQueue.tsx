@@ -297,7 +297,7 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
 };
 
     return (
-        <div className="bg-slate-50 rounded-2xl shadow-lg mt-4 mx-4 mb-4 flex flex-col h-[60vh] border border-gray-200/50">
+        <div className="bg-neutral-50 rounded-2xl shadow-lg mt-4 mx-4 mb-4 flex flex-col h-[60vh] border border-gray-200/50">
         {/* // <div className="bg-gray-100 rounded-md mt-2 w-full flex flex-col h-[60vh]"> */}
             {/* Header with recycle bin icon */}
             {/* <div className="flex items-center justify-between p-4 border-b border-gray-200">
