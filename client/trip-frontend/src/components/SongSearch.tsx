@@ -92,7 +92,7 @@ const SongSearch = ({ handleAddToQueue, isOpen, onClose }) => {
       setSearchQuery("");
       setSearchResults([]);
       setShowSearchResults(false);
-    }, 800);
+    }, 3000);
   };
 
   const formatDuration = (seconds) => {

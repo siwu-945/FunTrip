@@ -16,7 +16,7 @@ app.use(express.json());
 app.use('/api/spotify', spotifyRoutes);
 const httpServer = createServer(app);
 
-initSockets(httpServer);
+const io = initSockets(httpServer);
 
 // Health check
 app.get('/', (req, res) => {
@@ -38,6 +38,7 @@ app.post('/room/:roomId/validatePassword', (req, res) : void=> {
     res.json({ valid: room.password === password });
 });
 
+/*
 // Download song from yt
 app.post('/download-song', (req, res) =>{
     // TODO: we can actually make this serverless on AWS, 
@@ -58,6 +59,82 @@ app.post('/download-song', (req, res) =>{
         })
     })
 })
+*/
+
+// Get or cache audio URL for a song in a room
+app.post('/room/:roomId/song/:songIndex/audio', (req, res) => {
+    const { roomId, songIndex } = req.params;
+    const room = rooms[roomId];
+    
+    if (!room) {
+        res.status(404).json({ error: 'Room not found' });
+        return;
+    }
+    
+    const index = parseInt(songIndex);
+    const song = room.getSongStream[index];
+    
+    if (!song) {
+        res.status(404).json({ error: 'Song not found' });
+        return;
+    }
+    
+    // Check if audio URL is already cached
+    const cachedAudioUrl = room.getSongAudioUrl(index);
+    if (cachedAudioUrl) {
+        res.json({ audioUrl: cachedAudioUrl, cached: true });
+        return;
+    }
+    
+    // Check if song is already being downloaded
+    if (room.isSongDownloading(index)) {
+        res.status(202).json({ 
+            message: 'Song is already being downloaded, please wait',
+            audioUrl: null,
+            cached: false 
+        });
+        return;
+    }
+    
+    // Download and cache the audio URL
+    const songName = song.spotifyData.track?.name;
+    if (!songName) {
+        res.status(400).json({ error: 'Song name not found' });
+        return;
+    }
+    
+    // Mark song as being downloaded
+    room.markSongAsDownloading(index);
+    
+    const scriptPath = path.join(__dirname, '..', 'scripts', 'yt_downloader.py');
+    const python = spawn('python3', [scriptPath, songName]);
+    let audioUrl = '';
+    
+    python.stdout.on('data', (chunk) => {
+        audioUrl += chunk.toString();
+    });
+    
+    python.stderr.on('data', (err) => {
+        console.error('Python error:', err.toString());
+    });
+    
+    python.on('close', (code) => {
+        if (code === 0 && audioUrl.trim()) {
+            const finalAudioUrl = audioUrl.trim();
+            // Cache the audio URL in the room
+            room.setSongAudioUrl(index, finalAudioUrl);
+            // emit new audio URL event to all clients in the room
+            io.to(roomId).emit("audioUrlUpdated", {
+                songIndex: index,
+                audioUrl: finalAudioUrl
+            });
+            res.json({ audioUrl: finalAudioUrl, cached: false });
+        } else {
+            room.removeSongFromDownloading(index);
+            res.status(500).json({ error: 'Failed to download audio' });
+        }
+    });
+});
 
 // Search for songs on yt
 app.post('/search-songs', (req, res): void => {
