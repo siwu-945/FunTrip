@@ -37,6 +37,18 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, set
     }, [socket, roomId, songs.length]);
 
     useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        if (isPlaying) {
+            audio.play();
+        } else {
+            audio.pause();
+        }
+
+    }, [isPlaying]);
+
+    useEffect(() => {
         if (!socket) return;
 
         const handlePlaybackStarted = (progress) => {
@@ -68,6 +80,23 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, set
         };
     }, [socket]);
 
+    useEffect(() => {
+        const updateSongSourceUrl = async () => {
+            if (songs.length === 0 || currentIndex < 0 || currentIndex >= songs.length) {
+                setCurrentAudioUrl("");
+                return;
+            }
+            let audioUrl = populatedSongInfo[currentIndex]?.audioUrl;
+
+            if (!audioUrl) {
+                console.log("Audio url is empty, retrying...");
+                audioUrl = await retrieveAudio(currentIndex);
+            }
+            setCurrentAudioUrl(audioUrl);
+        }
+        updateSongSourceUrl();
+    }, [currentIndex]);
+
     // Get audio URL from backend cache or download if not cached
     const retrieveAudio = async (songIndex) => {
         try {
@@ -98,7 +127,6 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, set
         
         for (const songIndex of songsToPreload) {
             try {
-                console.log(`Pre-loading song: ${songIndex}`);
                 const response = await axios.post<AudioUrlResponse>(`${serverURL}/room/${roomId}/song/${songIndex}/audio`);
                 if (response.data.audioUrl) {
                     setPopulatedSongInfo(prev => {
@@ -140,14 +168,6 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, set
         }
 
         const nextSongIdx = currentIndex + 1;
-        let audioUrl = populatedSongInfo[nextSongIdx]?.audioUrl;
-
-        //TODO: add a retry or better info mechnisim
-        if (!audioUrl) {
-            console.log("Audio url is empty, retrying...");
-            audioUrl = await retrieveAudio(nextSongIdx);
-        }
-        setCurrentAudioUrl(audioUrl);
         setCurrentIndex(nextSongIdx);
 
         // send song index change to backend
@@ -169,13 +189,6 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, set
         }
 
         const prevSongIdx = currentIndex - 1;
-        let audioUrl = populatedSongInfo[prevSongIdx]?.audioUrl;
-
-        if (!audioUrl) {
-            console.log("Audio url is empty, retrying...");
-            audioUrl = await retrieveAudio(prevSongIdx);
-        }
-        setCurrentAudioUrl(audioUrl);
         setCurrentIndex(prevSongIdx);
 
         if (socket && roomId) {
@@ -305,6 +318,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, set
     }
 
     const handleProgressClick = (e) => {
+        console.log("Progress bar clicked");
         const audio = audioRef.current;
         if (!audio || !duration) return;
 
@@ -317,6 +331,7 @@ const MainAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, set
 
         audio.currentTime = newTime;                       // Seek audio
         setCurrentTime(newTime);                          // Update state
+        socket.emit("progressChanged", { roomId, newTime });
     };
 
     return (

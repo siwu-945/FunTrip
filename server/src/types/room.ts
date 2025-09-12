@@ -154,8 +154,6 @@ export class RoomInfo{
 
     public startSongPlayback() {
         console.log("Starting song playback:", {
-            roomId: this.roomID,
-            songIndex: this.currentSongIndex,
             songName: this.songStream[this.currentSongIndex]?.spotifyData.track?.name
         });
         this.startedAt = Date.now();
@@ -165,8 +163,6 @@ export class RoomInfo{
 
     public pauseSongPlayback() {
         console.log("Pausing song playback:", {
-            roomId: this.roomID,
-            songIndex: this.currentSongIndex,
             songName: this.songStream[this.currentSongIndex]?.spotifyData.track?.name
         });
         this.pasuedAt = Date.now() - this.startedAt;

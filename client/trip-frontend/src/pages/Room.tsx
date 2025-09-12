@@ -44,12 +44,6 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
 
     useEffect(() => {
         if (socket) {
-            socket.emit("updateSongIndex", { roomId, songIndex: currentIndex });
-        }
-    }, [currentIndex])
-
-    useEffect(() => {
-        if (socket) {
             const savedSession = getSavedUserSession()
             if (savedSession) {
                 socket.emit("userRejoined", {
@@ -321,8 +315,9 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 onReorderQueue={handleReorderQueue}
                 onDeleteSong={handleDeleteSong}
                 isDeletingSong={isDeletingSong}
-                setCurrentIndex={setCurrentIndex}
                 JoinedUsers={<JoinedUsers roomName={roomId} socket={socket} setUserJoined={setUserJoined} currentUser={currentUser} messages={formattedMessages} avatarIdx={avatarIdx} />}
+                roomId={roomId}
+                socket={socket}
             />
         </div>
     )

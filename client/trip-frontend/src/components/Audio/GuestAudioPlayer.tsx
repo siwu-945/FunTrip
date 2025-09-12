@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FaPlay, FaPause } from "react-icons/fa";
 
 export const GuestAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, setCurrentIndex }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -6,17 +7,13 @@ export const GuestAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIn
     const [duration, setDuration] = useState(0);
 
     useEffect(() => {
-        if (socket) {
-            const handleSongIndexUpdated = ({ songIndex }: { songIndex: number; songName?: string }) => {
-                setCurrentIndex(songIndex);
-            };
-
-            socket.on("songIndexUpdated", handleSongIndexUpdated);
-
-            return () => {
-                socket.off("songIndexUpdated", handleSongIndexUpdated);
-            };
-        }
+        if (!socket) return;
+        socket.on("isMusicPlaying", (playing) => {
+            setIsPlaying(playing);
+        });
+        return () => {
+            socket.off("isMusicPlaying");
+        };
     }, [socket]);
 
     useEffect(() => {
@@ -24,20 +21,56 @@ export const GuestAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIn
 
         const handlePlaybackStarted = (progress) => {
             setIsPlaying(true);
+            setCurrentTime(progress);
         };
 
         const handlePlaybackPaused = (progress) => {
             setIsPlaying(false);
+            setCurrentTime(progress);
+        };
+
+        const handleProgressUpdate = (roomId, progress) => {
+            setCurrentTime(progress);
         };
         socket.on("playbackStarted", handlePlaybackStarted);
         socket.on("playbackPaused", handlePlaybackPaused);
+        socket.on("progressChanged", handleProgressUpdate);
 
         return () => {
             socket.off("playbackStarted", handlePlaybackStarted);
             socket.off("playbackPaused", handlePlaybackPaused);
+            socket.off("progressChanged", handleProgressUpdate);
         };
     }, [socket, currentIndex]);
 
+    // useEffect(() => {
+    //     let interval;
+    //     if(isPlaying && currentTime > 0){
+    //         interval = setInterval(() => {
+    //             setCurrentTime(prevTime => {
+    //                 if (duration && prevTime >= duration) {
+    //                     return duration;
+    //                 }
+    //                 return prevTime + 1;
+    //             });
+    //         }, 1000); 
+    //     }
+        
+    //     return () => {
+    //         if (interval) {
+    //             clearInterval(interval);
+    //         }
+    //     };
+    // }, [isPlaying, duration]);
+
+    useEffect(() => {
+        if (songs[currentIndex]?.spotifyData?.track?.duration_ms) {
+            setDuration(songs[currentIndex].spotifyData.track.duration_ms / 1000);
+        } else {
+            setDuration(0);
+        }
+        setCurrentTime(0);
+    }, [currentIndex, songs]);
 
     const formatTime = (seconds) => {
         if (isNaN(seconds)) return '0:00';
@@ -51,6 +84,49 @@ export const GuestAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIn
         return (currentTime / duration) * 100;
     };
 
+    const handlePrevious = async () => {
+        if (currentIndex - 1 < 0) {
+            console.log("Already at first song");
+            return;
+        }
+
+        const prevSongIdx = currentIndex - 1;
+
+        setCurrentIndex(prevSongIdx);
+
+        if (socket && roomId) {
+            socket.emit("updateSongIndex", { roomId, songIndex: prevSongIdx });
+        }
+    };
+
+    const togglePlay = () => {
+        if (isPlaying) {
+            if (socket && roomId) {
+                socket.emit("pausePlayback", { roomId });
+            }
+        } else {
+            if (socket && roomId) {
+                socket.emit("startPlayback", { roomId });
+            }
+        }
+    };
+
+    const handleNext = async () => {
+        if (currentIndex + 1 >= songs.length) {
+            console.log("index out of range, song len: " + songs.length)
+            return;
+        }
+
+        const nextSongIdx = currentIndex + 1;
+
+        setCurrentIndex(nextSongIdx);
+
+        // send song index change to backend
+        if (socket && roomId) {
+            console.log("emitting next song index:", nextSongIdx);
+            socket.emit("updateSongIndex", { roomId, songIndex: nextSongIdx });
+        }
+    };
     
     return (
         <section className="pt-4 pl-6 pr-6 pb-6 bg-[#f8f8eb] relative">
@@ -100,7 +176,7 @@ export const GuestAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIn
             </div>
 
             {/* Progress Bar */}
-            <div className="mt-4">
+            {/* <div className="mt-4">
                 <div className="flex justify-between text-sm text-gray-600 mb-2">
                     <span>{formatTime(currentTime)}</span>
                     <span>{formatTime(duration)}</span>
@@ -113,6 +189,36 @@ export const GuestAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIn
                         style={{ width: `${getProgressPercentage()}%` }}
                     ></div>
                 </div>
+            </div> */}
+
+            <div className="flex justify-center items-center gap-6 mt-4">
+                <button
+                    onClick={handlePrevious}
+                    className="p-3 rounded-full hover:shadow-lg transition-shadow text-gray-700 hover:text-purple-600"
+                >
+                    <span className="flex items-center">
+                        <div className="w-[2px] h-4 bg-current ml-1"></div>
+                        <FaPlay className="text-sm rotate-180" />
+
+                    </span>
+                </button>
+
+                <button
+                    onClick={togglePlay}
+                    className="p-4 rounded-full bg-gray-600 text-white shadow-lg hover:shadow-xl transition-shadow hover:scale-105"
+                >
+                    {isPlaying ? <FaPause className="text-lg" /> : <FaPlay className="text-lg ml-1" />}
+                </button>
+
+                <button
+                    onClick={handleNext}
+                    className="p-3 rounded-full hover:shadow-lg transition-shadow text-gray-700 hover:text-purple-600"
+                >
+                    <span className="flex items-center">
+                        <FaPlay className="text-sm" />
+                        <div className="w-[2px] h-4 bg-current ml-1"></div>
+                    </span>
+                </button>
             </div>
         </section>
     );

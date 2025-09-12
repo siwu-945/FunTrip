@@ -21,6 +21,7 @@ import {
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Socket } from 'socket.io-client';
 
 interface CurrentSongQueueProps {
     songs: SongObj[];
@@ -30,8 +31,9 @@ interface CurrentSongQueueProps {
     onReorderQueue: (newOrder: SongObj[]) => void;
     onDeleteSong: (songIndex: number) => void;
     isDeletingSong: boolean;
-    setCurrentIndex: (idx: number) => void;
     JoinedUsers: React.ReactNode;
+    roomId: string;
+    socket: Socket | null;
 }
 
 interface SortableSongItemProps {
@@ -241,8 +243,9 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
     onReorderQueue,
     onDeleteSong,
     isDeletingSong,
-    setCurrentIndex,
-    JoinedUsers
+    JoinedUsers,
+    roomId,
+    socket
 }) => {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -291,7 +294,10 @@ const CurrentSongQueue: React.FC<CurrentSongQueueProps> = ({
             console.log("Song moved from after to before current, new index:", newCurrentIndex);
         }
         // If none of the above conditions are met, currentSongIndex stays the same
-        setCurrentIndex(newCurrentIndex);
+        if(socket){
+            socket.emit("updateSongIndex", { roomId, songIndex: newCurrentIndex });
+        }
+
         onReorderQueue(newOrder);
     }
 };

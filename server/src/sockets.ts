@@ -43,6 +43,7 @@ export default function initSockets(httpServer: HTTPServer): Server {
             songIndex: songIdx,
             songName: rooms[roomId].getSongStream[songIdx]?.spotifyData.track?.name
         });
+        io.to(roomId).emit('isMusicPlaying', !rooms[roomId].isPaused);
     }
 
     const updateCurrentSongQueue = (newSongs : SongObj[], roomId : string) => {
@@ -131,6 +132,9 @@ export default function initSockets(httpServer: HTTPServer): Server {
             
             io.to(roomId).emit('joinRoom', roomId);
             io.to(roomId).emit('userJoined', [...rooms[roomId].getUsers]);
+            const progress = rooms[roomId].getCurrentProgress();
+            console.log("current progress time: " + progress.currentTime);
+            io.to(roomId).emit('updateCurrentAudioProgress', progress.currentTime);
     
             socket.on("disconnect", () => {
                 disconnectUserFromRoom(roomId, username, io);
@@ -226,8 +230,7 @@ export default function initSockets(httpServer: HTTPServer): Server {
         })
 
         socket.on("startPlayback", ({roomId} : {roomId : string}) => {
-            
-            console.log("Start playback request for room:", roomId);
+            if(!rooms[roomId]) return
             
             // Start playback tracking
             rooms[roomId].startSongPlayback();
@@ -294,10 +297,10 @@ export default function initSockets(httpServer: HTTPServer): Server {
             
             if(isPaused){
                 rooms[roomId].pauseSongPlayback();
-                io.to(roomId).emit("playbackPaused", rooms[roomId].getCurrentProgress());
+                io.to(roomId).emit("playbackPaused", progressTime);
             }else{
                 rooms[roomId].startSongPlayback();
-                io.to(roomId).emit("playbackStarted", rooms[roomId].getCurrentProgress());
+                io.to(roomId).emit("playbackStarted", progressTime);
             }
             
             io.to(roomId).emit('updatePlayingStatus', isPaused);
