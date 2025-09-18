@@ -20,7 +20,7 @@ export const ToggleBtn: React.FC<ToggleProps> = ({ isParty, isHost, setIsParty }
                     peer-checked:translate-x-6 ${!isHost ? "opacity-60" : ""}`}></div>
             </label>
             <span className={`text-gray-700 text-sm font-medium ${isHost ? "opacity-60" : ""}`}>
-                {isParty ? 'Party Mode' : 'Is Alone (TODO)'}
+                {isParty ? 'Party Mode' : 'Far Far Away'}
                 {!isHost && " (Guests cannot toggle)"}
             </span>
         </div>

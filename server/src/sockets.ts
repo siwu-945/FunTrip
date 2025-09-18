@@ -105,6 +105,10 @@ export default function initSockets(httpServer: HTTPServer): Server {
     
     io.on('connection', (socket) => {
         socket.on('userRejoined', ({roomId, username} : {roomId:string; username:string}) =>{
+            if(!roomExist(roomId)){
+                console.error("No such room exist");
+                return;
+            }
             const songIdx = rooms[roomId].currentSongIndex;
             socket.join(roomId)
             io.to(roomId).emit("getCurrentSongStream", [...rooms[roomId].getSongStream])
@@ -130,12 +134,13 @@ export default function initSockets(httpServer: HTTPServer): Server {
             addUserToRoom(socket.id, roomId, username, avatarIdx);
             getCurrentSongsInfo(roomId);
             
-            io.to(roomId).emit('joinRoom', roomId);
+            // io.to(roomId).emit('joinRoom', roomId);
             io.to(roomId).emit('userJoined', [...rooms[roomId].getUsers]);
+            io.to(roomId).emit('currentPlayingStatus', [...rooms[roomId].getUsers]);
             const progress = rooms[roomId].getCurrentProgress();
-            console.log("current progress time: " + progress.currentTime);
             io.to(roomId).emit('updateCurrentAudioProgress', progress.currentTime);
-    
+            io.to(roomId).emit('getIsPartyStatus', rooms[roomId].isParty);
+            
             socket.on("disconnect", () => {
                 disconnectUserFromRoom(roomId, username, io);
                 socket.leave(roomId);

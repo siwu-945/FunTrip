@@ -12,7 +12,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
     return (
         <div
             className={`border-b border-gray-200 pt-4 pr-5 pb-4 pl-5 flex justify-between items-center bg-gradient-to-r
-    ${isParty ? 'from-[#f8f8eb] to-[#f8f8eb]' : 'from-pink-200 to-purple-300'}`}
+    ${isParty ? 'from-[#f8f8eb] to-[#f8f8eb]' : 'from-[#f8f8eb] via-pink-100 to-purple-100'}`}
         >
             {/* Left side - Room info */}
             <div className="flex-1">
@@ -29,7 +29,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                     {/* Show party mode status for guests */}
                     {!isHost && (
                         <div className="flex items-center gap-2">
-                            <span>Party Mode</span>
+                            <span>{isParty ? 'Party Mode' : 'You Are Far Away Mode'}</span>
                             <div className={`w-2 h-2 rounded-full ${isParty ? 'bg-green-500' : 'bg-gray-400'}`} />
                         </div>
                     )}

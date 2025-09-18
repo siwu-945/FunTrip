@@ -21,7 +21,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
     const [playStatus, setPlayStatus] = useState(false);
     const [currentQueue, setCurrentQueue] = useState<SongObj[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
-    const [isParty, setIsParty] = useState(true);
+    const [isParty, setIsParty] = useState<boolean | null>(null);
     const [isHost, setIsHost] = useState<boolean>(true);
     const [isDeletingSong, setIsDeletingSong] = useState<boolean>(false);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -52,6 +52,10 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 })
                 clearSavedUserSession();
             }
+
+            socket.on('getIsPartyStatus', (isParty: boolean) => {
+                setIsParty(isParty);
+            });
             // Playlist management
             socket.on("updateSongStream", (songStream: SongObj[]) => {
                 setCurrentQueue(songStream)
@@ -116,16 +120,6 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
         }
         checkHostStatus();
     }, [roomId, currentUser]);
-
-    useEffect(() => {
-        async function setCurrentRoomStatus() {
-            const response = await axios.post<{ isParty: boolean }>(`${serverURL}/room/${roomId}/setParty`, {
-                isParty
-            });
-        }
-        setCurrentRoomStatus();
-        socket.emit("changeRoomType", { roomId, isParty });
-    }, [isParty]);
 
     const handleAddToQueue = (selectedTracks: SpotifyApi.PlaylistTrackObject[]) => {
         socket.emit("addSongToStream", { selectedTracks, roomId })
@@ -275,6 +269,11 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
             console.error('Failed to clear session:', error);
         }
     }
+    const handleRoomTypeChange = (newIsParty: boolean) => {
+        setIsParty(newIsParty);
+        socket.emit("changeRoomType", { roomId, isParty: newIsParty });
+        
+    };
 
     return (
         <div className="min-h-screen bg-[#f8f8eb]">
@@ -282,7 +281,7 @@ export const Room: React.FC<RoomComponentProps> = ({ socket, roomId, setUserJoin
                 roomId={roomId}
                 isParty={isParty}
                 isHost={isHost}
-                setIsParty={setIsParty}
+                setIsParty={handleRoomTypeChange}
                 onExitRoom={() => {
                     handleUserLeave();
                 }}
