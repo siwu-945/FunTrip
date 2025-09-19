@@ -99,8 +99,13 @@ export default function initSockets(httpServer: HTTPServer): Server {
     }
 
     const disconnectUserFromRoom = (roomId : string, username : string, io : Server ) => {
+        if(!rooms[roomId]) return;
         rooms[roomId].removeUser(username);
-        io.emit("userLeft", [...rooms[roomId].getUsers]);
+        if(rooms[roomId].getUsers.size === 0){
+            delete rooms[roomId];
+            return;
+        }
+        io.to(roomId).emit("userLeft", [...rooms[roomId].getUsers]);
     }
     
     io.on('connection', (socket) => {

@@ -105,9 +105,10 @@ const WelcomePage: React.FC<UserInfoProps> = ({ username, setUsername, roomId, s
 
             {/* Main Content */}
             <main className={`flex flex-col items-center mt-20 pb-20 text-center ${isMenuOpen ? " blur-md" : ""}`}>
-                <h1 className="text-2xl font-normal mb-12 text-left">
-                    Your Party.<br />Your Music.<br /> Together.
+                <h1 className="text-2xl font-normal text-left">
+                    Your Party.<br />Your Music.
                 </h1>
+                <h1 className="text-2xl font-normal mb-12 text-center">You're Together.</h1>
 
                 <div className="w-72 text-left space-y-6">
                     <div>
@@ -124,10 +125,10 @@ const WelcomePage: React.FC<UserInfoProps> = ({ username, setUsername, roomId, s
                     </div>
                     <div>
                         <label className="block text-lg font-semibold mb-3 text-shadow">
-                            <i className="fas fa-key mr-2 text-blue-500"></i>Room Code
+                            <i className="fas fa-key mr-2 text-blue-500"></i>Room Name
                         </label>                        <input
                             type="text"
-                            placeholder="ENTER ROOM CODE"
+                            placeholder="ENTER ROOM NAME"
                             value={roomId}
                             onChange={(e) => setRoomId(e.target.value)}
                             className="w-72 p-4 rounded-xl shadow-md bg-[#FEFEFA] border-none text-gray-800"

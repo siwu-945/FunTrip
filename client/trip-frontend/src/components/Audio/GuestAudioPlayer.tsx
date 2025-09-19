@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FaPlay, FaPause } from "react-icons/fa";
 
 export const GuestAudioPlayer = ({ songs, audioPaused, socket, roomId, currentIndex, setCurrentIndex }) => {
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(audioPaused ? false : true);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
 
