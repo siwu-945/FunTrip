@@ -1,9 +1,14 @@
 import yt_dlp
 import sys
+import os
 
 songName = sys.argv[1]
+script_dir = os.path.dirname(os.path.abspath(__file__))
+cookie_path = os.path.join(script_dir, 'cookies.txt')
+
 ydl_opts = {
-    'quiet' : True
+    'quiet' : True,
+    'cookiefile' : cookie_path if os.path.exists(cookie_path) else None
 }
 
 # TODO: add handling error
