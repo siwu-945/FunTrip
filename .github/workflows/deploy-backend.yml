@@ -1,0 +1,32 @@
+name: Deploy Backend
+
+on:
+  push:
+    paths:
+      - 'server/**'   # only trigger if server/ changes
+    branches:
+      - main          
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          rsync -avz --delete ./server/ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.EC2_PATH }}/server/
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            cd ${{ secrets.EC2_PATH }}/server &&
+            npm install --production &&
+            pm2 reload music-server --update-env
+          "
